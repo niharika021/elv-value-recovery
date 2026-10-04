@@ -150,3 +150,23 @@ tr.review td { background: color-mix(in srgb, var(--warning) 12%, transparent); 
   .detail-grid { grid-template-columns: 1fr; }
   .hero-value { font-size: 48px; }
 }
+
+/* ---- inbox and decisions ---- */
+.who { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+input[type=text], select { font: inherit; font-size: 13px; color: var(--ink); background: var(--surface); border: 1px solid var(--axis); border-radius: 8px; padding: 6px 8px; }
+input[type=text] { min-width: 0; }
+button.primary { font: inherit; font-size: 13px; font-weight: 600; color: #fff; background: var(--series-1); border: 0; border-radius: 8px; padding: 7px 12px; cursor: pointer; white-space: nowrap; }
+button.primary:disabled { opacity: .5; cursor: not-allowed; }
+.inbox-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.inbox-grid h3, .decide h3 { font-size: 14px; margin: 0 0 8px; }
+.review-item { border: 1px solid var(--grid); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; display: grid; gap: 6px; }
+.review-item .what { font-size: 13px; }
+.review-item .why { font-size: 12px; color: var(--ink-2); }
+.decide-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.decide-row input[type=text] { flex: 1 1 180px; }
+.sign-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--grid); font-size: 13px; }
+.msg { font-size: 13px; min-height: 0; }
+.msg.ok { color: var(--good-ink); margin-bottom: 8px; }
+.msg.err { color: var(--critical-ink); margin-bottom: 8px; }
+.decide { border-top: 1px solid var(--grid); padding-top: 12px; }
+@media (max-width: 760px) { .inbox-grid { grid-template-columns: 1fr; } .panel-head { flex-wrap: wrap; } }

@@ -25,7 +25,8 @@ Ground rules, always:
   in this conversation. Copy it; do not calculate new figures, round differently, or estimate.
   If you need a figure no tool gives, say so.
 - You explain; you never decide. Never say a part or vehicle is approved, overridden, released
-  or re-priced. Engineer decisions are made by an engineer, outside this chat.
+  or re-priced unless the decision log records an engineer doing it; then say who, when and why.
+  Engineer decisions are made in the approval inbox, never in this chat.
 - Name your source: the drawing number for a limit, the rule ID and source document for
   compliance, the component line for a harvest decision.
 - Rupees as INR with thousands separators (INR 41,984). Plain, short answers for an RVSF team.
@@ -72,10 +73,11 @@ root_agent = Agent(
     description="ELV value recovery coordinator for a registered vehicle scrapping facility (RVSF).",
     instruction="""You help an RVSF team earn more from each end-of-life vehicle, close the gap to
 the informal scrapper's offer, and stay compliant.
-You answer questions on offers, value, harvest plans and labour what-ifs with your own tools.
+You answer questions on offers, value, harvest plans, labour what-ifs and recorded engineer
+decisions with your own tools.
 Transfer to inspection_agent for part grading, drawing limits and the engineer review queue.
 Transfer to compliance_agent for compliance rules, evidence and release.
 """ + GROUND_RULES,
-    tools=[tools.month_overview, tools.vehicle_value, tools.plan_what_if],
+    tools=[tools.month_overview, tools.vehicle_value, tools.plan_what_if, tools.decision_log],
     sub_agents=[inspection_agent, compliance_agent],
 )

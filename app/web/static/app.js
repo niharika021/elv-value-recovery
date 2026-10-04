@@ -9,7 +9,7 @@ const $ = (id) => document.getElementById(id);
 
 const STATUS_TEXT = { green: "Compliant", amber: "Evidence gap", red: "Blocked" };
 const pill = (status, text) => `<span class="pill ${esc(status)}">${esc(text ?? STATUS_TEXT[status] ?? status)}</span>`;
-const approvalPill = (s) => s === "ready" ? pill("green", "Ready to sign") : pill("neutral", "Awaiting engineer");
+const approvalPill = (s) => s === "signed" ? pill("green", "Signed off") : s === "ready" ? pill("green", "Ready to sign") : pill("neutral", "Awaiting engineer");
 
 async function getJSON(url) {
   const r = await fetch(url);
@@ -133,6 +133,7 @@ function renderCards(vehicles) {
 
 // ---- detail ----------------------------------------------------------------------------
 async function openVehicle(vid) {
+  openVid = vid;
   const dlg = $("detail");
   $("detail-title").textContent = vid;
   $("detail-body").innerHTML = `<p class="muted">Loading…</p>`;
@@ -199,22 +200,141 @@ function renderDetail(p) {
     <section><h2>Components</h2>${comps}</section>
     <section><h2>Teardown grading</h2>${grading}</section>
     <section><h2>Compliance</h2>${rules}</section>
-    <section class="approval"><b>Engineer sign-off:</b> ${p.approval.status === "ready" ? "nothing open; ready to sign" : "pending until the open items are resolved"}.
-      Agents and this screen explain; only an engineer decides.</section>`;
+    ${planForm(p)}
+    ${decisionsTable(p.decisions)}
+    <section class="approval" id="approval">${approvalBlock(p)}</section>`;
+  wireDetail(p);
+}
+
+const HARVESTABLE = new Set(["harvestable", "not_worth_it"]);
+
+function planForm(p) {
+  const opts = p.components.filter((c) => HARVESTABLE.has(c.status))
+    .map((c) => `<option value="${esc(c.component)}">${label(c.component)} (${c.harvested ? "harvested" : "left on"})</option>`).join("");
+  if (!opts) return "";
+  return `<section class="decide"><h3>Change the plan</h3>
+    <div class="decide-row"><select id="plan-comp" aria-label="Component">${opts}</select>
+      <select id="plan-action" aria-label="Instruction"><option value="exclude">Exclude</option><option value="require">Require</option><option value="clear">Clear earlier instruction</option></select>
+      <input id="plan-reason" type="text" placeholder="Reason (required)" maxlength="500" aria-label="Reason">
+      <button class="primary" type="button" id="plan-go">Record</button></div>
+    <div class="msg" id="plan-msg" role="status" aria-live="polite"></div></section>`;
+}
+
+const when = (at) => esc(String(at).replace("T", " ").replace("+00:00", ""));
+
+function decisionsTable(ds) {
+  if (!ds || !ds.length) return `<section><h2>Engineer decisions</h2><p class="muted">None recorded for this vehicle.</p></section>`;
+  return `<section><h2>Engineer decisions</h2><div class="table-wrap"><table><thead><tr><th>When (UTC)</th><th>Engineer</th><th>Decision</th><th>Reason</th></tr></thead><tbody>
+    ${ds.slice().reverse().map((d) => `<tr><td class="num">${when(d.at)}</td><td>${esc(d.engineer)}</td>
+      <td>${esc(d.kind.replace("_", " "))} · ${esc(d.target || d.vehicle_id)} · ${esc(d.action)}</td><td>${esc(d.reason)}</td></tr>`).join("")}</tbody></table></div></section>`;
+}
+
+function approvalBlock(p) {
+  const a = p.approval;
+  if (a.status === "signed") return `<b>Signed off</b> by ${esc(a.engineer)} at ${when(a.signed_at)} UTC.`;
+  if (a.status === "ready") return `<div class="decide-row"><span><b>Nothing open.</b> Ready for an engineer to sign off.</span>
+    <button class="primary" type="button" id="sign-go">Sign off ${esc(p.vehicle_id)}</button></div><div class="msg" id="sign-msg" role="status" aria-live="polite"></div>`;
+  return `<b>Engineer sign-off:</b> pending until the open items are resolved. Agents and this screen explain; only an engineer decides.`;
+}
+
+function wireDetail(p) {
+  const go = $("plan-go");
+  if (go) go.addEventListener("click", () => decide({ kind: "harvest", vehicle_id: p.vehicle_id, target: $("plan-comp").value,
+    action: $("plan-action").value, reason: $("plan-reason").value }, $("plan-msg")));
+  const sign = $("sign-go");
+  if (sign) sign.addEventListener("click", () => decide({ kind: "sign_off", vehicle_id: p.vehicle_id, action: "sign" }, $("sign-msg")));
 }
 
 $("detail-close").addEventListener("click", () => $("detail").close());
 $("detail").addEventListener("click", (e) => { if (e.target === $("detail")) $("detail").close(); });
 
+// ---- decisions ------------------------------------------------------------------------------
+const engineer = $("engineer");
+try { engineer.value = localStorage.getItem("elv-engineer") || ""; } catch (_) {}
+engineer.addEventListener("change", () => { try { localStorage.setItem("elv-engineer", engineer.value.trim()); } catch (_) {} });
+
+function say(el, text, ok) { if (el) { el.textContent = text; el.className = "msg " + (ok ? "ok" : "err"); } }
+
+let lastNote = null;   // survives the re-render that follows a decision
+
+async function decide(body, msgEl) {
+  const who = engineer.value.trim();
+  if (!who) { say(msgEl, "Enter your name in the inbox (Engineer) first.", false); return false; }
+  const r = await fetch("/api/decisions", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, engineer: who }) });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { say(msgEl, data.detail || `Not recorded (${r.status}).`, false); return false; }
+  const d = data.decision;
+  const what = d.kind === "sign_off" ? `${d.vehicle_id} signed off` : `${d.vehicle_id} ${d.target}: ${d.action.replace(":", " to ")}`;
+  lastNote = { id: msgEl && msgEl.id, text: `Recorded: ${what}, by ${d.engineer}.` };
+  await loadAll();
+  return true;
+}
+
+const ACTION_TEXT = { accept: "Accept the engine's verdict", "override:reuse": "Override: reuse", "override:replace": "Override: replace",
+  "override:refurbish": "Override: refurbish", "override:scrap": "Override: scrap" };
+
+function renderInbox(ib) {
+  const reviews = ib.reviews.length ? ib.reviews.map((r, i) => `
+    <div class="review-item">
+      <div class="what"><b>${esc(r.vehicle_id)} · ${esc(r.part_no)}</b> · engine verdict <b>${esc(r.verdict)}</b>
+        ${(r.flags || "").split(",").filter(Boolean).map((f) => `<span class="flag">${label(f)}</span>`).join("")}</div>
+      <div class="why">${esc(r.reason)} Inspector note: "${esc(r.inspector_note)}"</div>
+      <div class="decide-row">
+        <select id="rv-act-${i}" aria-label="Decision for ${esc(r.vehicle_id)} ${esc(r.part_no)}">
+          ${Object.entries(ACTION_TEXT).filter(([a]) => a !== "override:" + r.verdict).map(([a, t]) => `<option value="${a}">${esc(t)}</option>`).join("")}</select>
+        <input id="rv-why-${i}" type="text" placeholder="Reason (required)" maxlength="500" aria-label="Reason">
+        <button class="primary" type="button" data-i="${i}">Record</button>
+      </div>
+    </div>`).join("") : `<p class="muted">No parts waiting for review.</p>`;
+  const ready = ib.ready_to_sign.length ? ib.ready_to_sign.map((v) => `
+    <div class="sign-item"><span><b>${esc(v.vehicle_id)}</b> · ${inr(v.offer)} · ${pill(v.compliance)}</span>
+      <button class="primary" type="button" data-sign="${esc(v.vehicle_id)}">Sign off</button></div>`).join("")
+    : `<p class="muted">No vehicle is ready: each still has open items.</p>`;
+  const signed = ib.signed.map((v) => `<div class="sign-item"><span><b>${esc(v.vehicle_id)}</b> signed by ${esc(v.engineer)}</span><span class="muted">${when(v.signed_at)}</span></div>`).join("");
+  const recent = ib.recent.length ? `<div class="table-wrap"><table><thead><tr><th>When (UTC)</th><th>Engineer</th><th>Decision</th><th>Reason</th></tr></thead><tbody>
+    ${ib.recent.map((d) => `<tr><td class="num">${when(d.at)}</td><td>${esc(d.engineer)}</td>
+      <td>${esc(d.vehicle_id)} ${esc(d.target)} · ${esc(d.action)}</td><td>${esc(d.reason)}</td></tr>`).join("")}</tbody></table></div>`
+    : `<p class="muted">No decisions recorded yet.</p>`;
+
+  $("inbox").innerHTML = `<div class="inbox-grid">
+      <div><h3>Parts waiting for review (${ib.reviews.length})</h3>${reviews}</div>
+      <div><h3>Ready to sign off (${ib.ready_to_sign.length})</h3>${ready}${signed ? `<h3 style="margin-top:14px">Signed off</h3>${signed}` : ""}</div>
+    </div>
+    <h3 style="margin-top:16px">Recent decisions</h3>${recent}`;
+
+  $("inbox").querySelectorAll("button[data-i]").forEach((b) => b.addEventListener("click", () => {
+    const r = ib.reviews[+b.dataset.i], i = b.dataset.i;
+    decide({ kind: "part_review", vehicle_id: r.vehicle_id, target: r.part_no, action: $(`rv-act-${i}`).value,
+      reason: $(`rv-why-${i}`).value }, $("inbox-msg"));
+  }));
+  $("inbox").querySelectorAll("button[data-sign]").forEach((b) => b.addEventListener("click", () =>
+    decide({ kind: "sign_off", vehicle_id: b.dataset.sign, action: "sign" }, $("inbox-msg"))));
+}
+
 // ---- boot --------------------------------------------------------------------------------
+let current = null, openVid = null;
+
+async function loadAll() {
+  const [data, ib] = await Promise.all([getJSON("/api/month"), getJSON("/api/inbox")]);
+  current = data;
+  renderSummary(data.month, data.vehicles);
+  renderChart(data.vehicles);
+  renderCards(data.vehicles);
+  renderInbox(ib);
+  if ($("detail").open && openVid) renderDetail(await getJSON(`/api/vehicles/${encodeURIComponent(openVid)}`));
+  if (lastNote) {
+    const el = (lastNote.id && $(lastNote.id)) || ($("detail").open ? $("approval") : $("inbox-msg"));
+    if (el) { if (el.id === "approval") el.insertAdjacentHTML("beforeend", `<div class="msg ok">${esc(lastNote.text)}</div>`); else say(el, lastNote.text, true); }
+    lastNote = null;
+  }
+}
+
 (async function boot() {
   try {
-    const data = await getJSON("/api/month");
-    renderSummary(data.month, data.vehicles);
-    renderChart(data.vehicles);
-    renderCards(data.vehicles);
+    await loadAll();
     let w = innerWidth;
-    addEventListener("resize", () => { if (Math.abs(innerWidth - w) > 40) { w = innerWidth; renderChart(data.vehicles); } });
+    addEventListener("resize", () => { if (current && Math.abs(innerWidth - w) > 40) { w = innerWidth; renderChart(current.vehicles); } });
   } catch (e) {
     $("cards").innerHTML = `<p>Could not load the month: ${esc(e.message)}</p>`;
   }

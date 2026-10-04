@@ -5,12 +5,11 @@ use to approve, override or re-price. Engineer decisions happen outside the agen
 """
 from __future__ import annotations
 
-from functools import lru_cache
-
 import pandas as pd
 
 from app.engines.audit import _clean, build_month
 from app.engines.compliance import dismantle_blocked
+from app.engines.decisions import JsonlStore
 from app.engines.grading import DATA
 from app.engines.planner import plan_harvest
 from app.engines.value import month_table, value_month
@@ -18,9 +17,16 @@ from app.engines.value import month_table, value_month
 VEHICLES = [f"V{i:02d}" for i in range(1, 13)]
 
 
-@lru_cache(maxsize=1)
+STORE = JsonlStore()   # engineer decisions; Firestore on Cloud Run
+_cache: dict = {}
+
+
 def _packs() -> dict[str, dict]:
-    return build_month()
+    """Audit packs with every recorded engineer decision applied; rebuilt when the log changes."""
+    v = STORE.version()
+    if _cache.get("version") != v:
+        _cache.update(version=v, packs=build_month(decisions=STORE.all()))
+    return _cache["packs"]
 
 
 def _vid(vehicle_id: str) -> str | None:
@@ -78,8 +84,10 @@ def plan_what_if(capacity_minutes: int) -> dict:
     fail a dismantle-stage compliance rule stay blocked."""
     if capacity_minutes < 0:
         return {"error": "capacity_minutes must be 0 or more"}
+    from app.engines.decisions import harvest_instructions
     blocked = dismantle_blocked()
-    plan = plan_harvest(capacity_minutes=capacity_minutes, blocked=blocked)
+    exclude, require = harvest_instructions(STORE.all())
+    plan = plan_harvest(capacity_minutes=capacity_minutes, blocked=blocked, exclude=exclude, require=require)
     t = month_table(value_month(plan.harvests, with_grading=False))
     before = (t.informal - t.offer_scrap_only).mean()
     left = plan.dropped[plan.dropped.why == "labour capacity"]
@@ -89,6 +97,18 @@ def plan_what_if(capacity_minutes: int) -> dict:
                        blocked_before_dismantling=sorted(blocked),
                        offers_inr=dict(zip(t.vehicle, t.offer)),
                        left_for_capacity=left[["vehicle_id", "component", "net", "minutes"]].to_dict("records")))
+
+
+def decision_log(vehicle_id: str = "") -> dict:
+    """Engineer decisions recorded in the approval inbox (all vehicles, or one): who decided what,
+    when, why, and what the engine said at the time. Decisions are made by engineers, never by agents."""
+    vid = _vid(vehicle_id) if vehicle_id else None
+    if vehicle_id and not vid:
+        return _unknown(vehicle_id)
+    ds = [d for d in STORE.all() if vid is None or d.vehicle_id == vid]
+    return _clean(dict(count=len(ds), decisions=[dict(at=d.at, engineer=d.engineer, kind=d.kind, vehicle_id=d.vehicle_id,
+                                                      target=d.target, action=d.action, reason=d.reason, context=d.context)
+                                                 for d in ds]))
 
 
 # ---- inspection agent ----------------------------------------------------------------------

@@ -7,7 +7,7 @@ from app.elv_agent import tools
 from app.elv_agent.agent import compliance_agent, inspection_agent, root_agent
 from app.elv_agent.grounding import numbers_in_text, ungrounded
 
-ALL_TOOLS = [tools.month_overview, tools.vehicle_value, tools.plan_what_if, tools.vehicle_grading,
+ALL_TOOLS = [tools.month_overview, tools.vehicle_value, tools.plan_what_if, tools.decision_log, tools.vehicle_grading,
              tools.review_queue, tools.drawing_rule, tools.vehicle_compliance, tools.compliance_overview]
 
 

@@ -12,7 +12,7 @@ This app helps an RVSF earn more from every vehicle:
 
 Design rule: **agents read and explain; fixed engines own every number; an engineer approves every decision.**
 
-> Status: Day 9 (engines, Gemini drawing reader, compliance, audit pack, ADK agents, web dashboard). Approval inbox, chat and deployment follow; see the timeline in the project plan.
+> Status: Day 10 (engines, Gemini drawing reader, compliance, audit pack, ADK agents, web dashboard, approval inbox). Chat and deployment follow; see the timeline in the project plan.
 
 ---
 
@@ -142,6 +142,13 @@ Live check on the planted stories (`gemini-3.8-flash`, temperature 0): **9/9 pas
 
 FastAPI serves a read-only JSON API (`/api/month`, `/api/vehicles/{id}`, `/api/review-queue`, `/api/what-if`; docs at `/api/docs`) over the same tool outputs the agents use, and a no-build front end:
 a month summary (gap closed, average gaps, blocked vehicles, steel, CO₂, open items), a per-vehicle chart of scrap-only offer -> offer with harvesting against the informal offer (with a table view), and vehicle cards that open the full audit pack: how the offer is built, open items, component decisions, teardown grading with review rows marked, and compliance rule by rule. Light and dark, phone to desktop. The screen computes no figures of its own.
+
+### Approval inbox (`app/engines/decisions.py`, `POST /api/decisions`)
+
+The only way a human changes an outcome. An engineer can **accept or override** a flagged part's verdict, **exclude or require** a component (the planner re-plans and the offer moves), and **sign off** a vehicle.
+Rules: every decision names the engineer and gives a reason (compliance C08); an override must differ from the engine's verdict; impossible plan instructions are refused; sign-off needs nothing open and goes stale if anything about the vehicle is decided afterwards; compliance gaps cannot be decided away, only closed with evidence.
+The log is append-only and each entry keeps what the engine said at that moment. Stored as JSON lines in `out/decisions.jsonl` locally (`ELV_DECISIONS` to move it); Firestore on Cloud Run. Identity is self-declared in the demo; sign-in (IAP) is the production answer.
+The agents read the log (`decision_log`) and report who decided what and why; they still cannot decide.
 
 ### Economics check (`scripts/check_values.py`)
 

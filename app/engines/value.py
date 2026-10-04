@@ -211,7 +211,8 @@ def attach_grading(lines: pd.DataFrame, vehicle_id: str, units: pd.DataFrame, gr
     return lines
 
 
-def value_month(harvests: dict[str, list[str]] | None = None, with_grading: bool = True) -> list[VehicleValue]:
+def value_month(harvests: dict[str, list[str]] | None = None, with_grading: bool = True,
+                grades: pd.DataFrame | None = None) -> list[VehicleValue]:
     """Value every vehicle in the synthetic month. harvests=None uses the default rule; a harvests
     dict must name every vehicle, so a vehicle missing from a plan is never silently re-planned."""
     veh = pd.read_csv(DATA / "vehicles.csv")
@@ -221,7 +222,7 @@ def value_month(harvests: dict[str, list[str]] | None = None, with_grading: bool
     prices, carbon = load_prices(), load_carbon()
     if with_grading:
         from app.engines.grading import grade_inspections, summarise_units
-        grades = grade_inspections()
+        grades = grade_inspections() if grades is None else grades   # pass decided grades to show reviews resolved
         units, pm = summarise_units(grades), pd.read_csv(DATA / "part_market.csv")
     out = []
     for v in veh.itertuples(index=False):

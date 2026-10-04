@@ -1,8 +1,17 @@
+import pytest
 from fastapi.testclient import TestClient
 
+from app.elv_agent import tools
 from app.web.server import app
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def empty_decision_log():
+    tools.STORE.path.unlink(missing_ok=True)
+    yield
+    tools.STORE.path.unlink(missing_ok=True)
 
 
 def test_page_and_assets_are_served():
@@ -34,3 +43,26 @@ def test_what_if_validates_input():
 def test_api_is_read_only():
     for path in ("/api/month", "/api/vehicles/V05", "/api/review-queue"):
         assert client.post(path).status_code == 405
+
+
+def test_inbox_lists_reviews_and_signable_vehicles():
+    i = client.get("/api/inbox").json()
+    assert {("V05", "STR-03"), ("V08", "ALT-08")} <= {(r["vehicle_id"], r["part_no"]) for r in i["reviews"]}
+    assert {v["vehicle_id"] for v in i["ready_to_sign"]} == {"V01", "V09"}
+
+
+def test_a_decision_is_recorded_and_changes_the_inbox():
+    body = dict(engineer="Test Engineer", kind="part_review", vehicle_id="v08", action="accept",
+                target="ALT-08", reason="spin test quiet after cleaning")
+    r = client.post("/api/decisions", json=body)
+    assert r.status_code == 201 and r.json()["decision"]["context"]["engine_verdict"] == "reuse"
+    assert ("V08", "ALT-08") not in {(x["vehicle_id"], x["part_no"]) for x in client.get("/api/inbox").json()["reviews"]}
+    assert client.get("/api/decisions").json()["count"] >= 1
+
+
+def test_a_refused_decision_is_a_400_with_the_reason():
+    r = client.post("/api/decisions", json=dict(engineer="T", kind="sign_off", vehicle_id="V05", action="sign"))
+    assert r.status_code == 400 and "open item" in r.json()["detail"]
+    r = client.post("/api/decisions", json=dict(engineer="", kind="part_review", vehicle_id="V05",
+                                                action="accept", target="STR-03", reason="x"))
+    assert r.status_code == 400

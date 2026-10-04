@@ -26,6 +26,18 @@
       <div class="tiles" id="tiles"></div>
     </section>
 
+    <section class="panel" aria-labelledby="inbox-h">
+      <div class="panel-head">
+        <div>
+          <h2 id="inbox-h">Approval inbox</h2>
+          <p class="sub">Engineers decide here. Every decision is attributed, needs a reason, and is never edited afterwards.</p>
+        </div>
+        <label class="who">Engineer <input id="engineer" type="text" autocomplete="name" placeholder="Your name" maxlength="80"></label>
+      </div>
+      <div id="inbox-msg" class="msg" role="status" aria-live="polite"></div>
+      <div id="inbox"></div>
+    </section>
+
     <section class="panel" aria-labelledby="chart-h">
       <div class="panel-head">
         <div>
