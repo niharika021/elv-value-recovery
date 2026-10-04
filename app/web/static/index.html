@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ELV Value Recovery</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>ELV Value Recovery Planner</h1>
+      <p class="sub">Synthetic RVSF month, October 2026 · engines own every number · an engineer approves every decision</p>
+    </div>
+    <button id="theme" class="ghost" type="button" aria-label="Switch colour theme">Theme</button>
+  </header>
+
+  <main>
+    <section class="summary" aria-labelledby="summary-h">
+      <h2 id="summary-h" class="sr-only">Month summary</h2>
+      <div class="hero">
+        <div class="hero-label">Gap to the informal scrapper closed this month</div>
+        <div class="hero-value" id="hero-value">–</div>
+        <div class="hero-note" id="hero-note"></div>
+      </div>
+      <div class="tiles" id="tiles"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="chart-h">
+      <div class="panel-head">
+        <div>
+          <h2 id="chart-h">Owner offer against the informal scrapper</h2>
+          <p class="sub">Per vehicle, INR. The gap left is what the informal scrapper still pays more.</p>
+        </div>
+        <button id="table-toggle" class="ghost" type="button" aria-pressed="false">Show table</button>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div id="chart" class="chart" role="img" aria-label="Offers per vehicle against the informal offer"></div>
+      <div id="chart-table" class="table-wrap" hidden></div>
+    </section>
+
+    <section aria-labelledby="cards-h">
+      <h2 id="cards-h">Vehicles</h2>
+      <div class="cards" id="cards"></div>
+    </section>
+  </main>
+
+  <dialog id="detail" aria-labelledby="detail-title">
+    <div class="detail-head">
+      <h2 id="detail-title"></h2>
+      <button class="ghost" type="button" id="detail-close" aria-label="Close">Close</button>
+    </div>
+    <div id="detail-body"></div>
+  </dialog>
+
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+
+  <footer>All vehicles, parts, drawings, prices and evidence are invented for a hackathon demo. The compliance rule pack is a simplified summary, not legal advice.</footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>

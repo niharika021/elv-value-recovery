@@ -10,7 +10,10 @@ google-genai>=1.0
 pypdf>=5.0
 python-dotenv>=1.0
 google-adk>=2.0
-# Coming next (agents, cloud)
+# Day 9: web app
+fastapi>=0.110
+uvicorn>=0.30
+# Coming next (cloud)
 # google-cloud-bigquery
 # google-cloud-storage
 # google-cloud-firestore
