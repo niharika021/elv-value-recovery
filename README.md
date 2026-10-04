@@ -12,7 +12,7 @@ This app helps an RVSF earn more from every vehicle:
 
 Design rule: **agents read and explain; fixed engines own every number; an engineer approves every decision.**
 
-> Status: Day 1 (synthetic data + drawings). Agents, engines and the web app follow; see the timeline in the project plan.
+> Status: Day 3 (grading engine). Value engine, harvest planner, agents and the web app follow; see the timeline in the project plan.
 
 ---
 
@@ -35,6 +35,8 @@ pip install -r requirements.txt
 python scripts/generate_data.py
 python scripts/make_drawings.py
 python scripts/check_values.py
+python -m app.engines.grading     # Day 3: grade every teardown part
+python -m pytest -q
 ```
 
 ## Dataset (all invented)
@@ -68,6 +70,20 @@ python scripts/check_values.py
 | V10 | Catalytic converter missing before intake: biggest value gap |
 | V11 | Mislabelled model code and missing photos: data quality and amber compliance |
 | V12 | No hazardous-waste manifest: compliance **amber** |
+
+### Grading engine (`app/engines/grading.py`)
+
+Measurement + drawing limit -> **reuse / replace / refurbish / scrap** for each part. Limits are inclusive, a missing reading is never a pass, and malformed rules are rejected (they will come from Gemini later).
+Inspector notes and photos **never change a verdict**; they raise flags, and any flagged part goes to an engineer:
+
+| Flag | Raised when | Demo |
+|---|---|---|
+| `note_contradicts_measurement` | a dimension fails but the note says it looks fine | V05 starter brushes |
+| `borderline` | a pass with under 10% of the tolerance band left | V08 alternator bearing |
+| `note_suggests_wear` | a pass, but the note describes damage or noise | V08 "slight noise" |
+| `photo_missing` | no photo: grading evidence incomplete (compliance C06), not an engineering review | V11 |
+
+Synthetic month: 190 parts graded, 176 reuse, 7 replace, 7 scrap, 8 for engineer review.
 
 ### Economics check (`scripts/check_values.py`)
 
