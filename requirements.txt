@@ -5,6 +5,10 @@ reportlab>=4.0
 # Day 3-5: engines
 pytest>=8.0
 ortools>=9.10
+# Day 6: agents
+google-genai>=1.0
+pypdf>=5.0
+python-dotenv>=1.0
 # Coming next (agents, cloud)
 # google-adk
 # google-cloud-bigquery
