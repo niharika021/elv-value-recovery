@@ -1,0 +1,191 @@
+vehicle_id,unit_type,part_no,measure,measured_value,crack,corrosion_level,inspector_note,photo_uri,inspector
+V01,starter,STR-01,crack_check,fail,Y,2,hairline crack near mounting boss,photos/V01_STR-01.jpg,INSP-2
+V01,starter,STR-02,commutator_diameter,31.59,N,1,"clean, normal wear",photos/V01_STR-02.jpg,INSP-2
+V01,starter,STR-03,brush_length,12.01,N,2,"clean, normal wear",photos/V01_STR-03.jpg,INSP-2
+V01,starter,STR-04,corrosion_level,0,N,0,light wear,photos/V01_STR-04.jpg,INSP-2
+V01,starter,STR-05,pull_in_coil_resistance,0.4,N,0,"clean, normal wear",photos/V01_STR-05.jpg,INSP-3
+V01,starter,STR-06,pinion_tooth_wear,0.177,N,1,looks ok,photos/V01_STR-06.jpg,INSP-2
+V01,starter,STR-07,gear_backlash,0.155,N,0,light wear,photos/V01_STR-07.jpg,INSP-2
+V01,starter,STR-08,radial_play,0.062,N,0,good condition,photos/V01_STR-08.jpg,INSP-2
+V01,starter,STR-09,crack_check,pass,N,1,light wear,photos/V01_STR-09.jpg,INSP-1
+V01,starter,STR-10,corrosion_level,0,N,0,"clean, normal wear",photos/V01_STR-10.jpg,INSP-1
+V01,alternator,ALT-01,crack_check,fail,Y,2,hairline crack near mounting boss,photos/V01_ALT-01.jpg,INSP-3
+V01,alternator,ALT-02,crack_check,pass,N,0,looks ok,photos/V01_ALT-02.jpg,INSP-1
+V01,alternator,ALT-03,slip_ring_diameter,14.2,N,0,light wear,photos/V01_ALT-03.jpg,INSP-3
+V01,alternator,ALT-04,insulation_test,pass,N,1,within spec by eye,photos/V01_ALT-04.jpg,INSP-2
+V01,alternator,ALT-05,exposed_brush_length,6.82,N,1,light wear,photos/V01_ALT-05.jpg,INSP-1
+V01,alternator,ALT-06,regulated_voltage,14.76,N,1,"clean, normal wear",photos/V01_ALT-06.jpg,INSP-3
+V01,alternator,ALT-07,diode_test,pass,N,1,light wear,photos/V01_ALT-07.jpg,INSP-1
+V01,alternator,ALT-08,radial_play,0.088,N,1,good condition,photos/V01_ALT-08.jpg,INSP-1
+V01,alternator,ALT-09,groove_wear,0.089,N,0,good condition,photos/V01_ALT-09.jpg,INSP-1
+V01,alternator,ALT-10,radial_play,0.076,N,0,within spec by eye,photos/V01_ALT-10.jpg,INSP-1
+V02,starter,STR-01,crack_check,pass,N,1,looks ok,photos/V02_STR-01.jpg,INSP-1
+V02,starter,STR-02,commutator_diameter,31.83,N,0,light wear,photos/V02_STR-02.jpg,INSP-1
+V02,starter,STR-03,brush_length,12.36,N,0,"clean, normal wear",photos/V02_STR-03.jpg,INSP-3
+V02,starter,STR-04,corrosion_level,0,N,0,within spec by eye,photos/V02_STR-04.jpg,INSP-2
+V02,starter,STR-05,pull_in_coil_resistance,0.45,N,0,"clean, normal wear",photos/V02_STR-05.jpg,INSP-3
+V02,starter,STR-06,pinion_tooth_wear,0.155,N,0,good condition,photos/V02_STR-06.jpg,INSP-1
+V02,starter,STR-07,gear_backlash,0.233,N,1,light wear,,INSP-1
+V02,starter,STR-08,radial_play,0.069,N,1,"clean, normal wear",photos/V02_STR-08.jpg,INSP-2
+V02,starter,STR-09,crack_check,pass,N,1,"clean, normal wear",photos/V02_STR-09.jpg,INSP-3
+V02,starter,STR-10,corrosion_level,0,N,0,light wear,photos/V02_STR-10.jpg,INSP-2
+V02,alternator,ALT-01,crack_check,pass,N,1,within spec by eye,photos/V02_ALT-01.jpg,INSP-1
+V02,alternator,ALT-02,crack_check,pass,N,0,looks ok,photos/V02_ALT-02.jpg,INSP-2
+V02,alternator,ALT-03,slip_ring_diameter,14.2,N,2,looks ok,photos/V02_ALT-03.jpg,INSP-2
+V02,alternator,ALT-04,insulation_test,pass,N,0,good condition,photos/V02_ALT-04.jpg,INSP-3
+V02,alternator,ALT-05,exposed_brush_length,5.38,N,0,good condition,photos/V02_ALT-05.jpg,INSP-3
+V02,alternator,ALT-06,regulated_voltage,14.5,N,0,regulator tests perfect,photos/V02_ALT-06.jpg,INSP-2
+V02,alternator,ALT-07,diode_test,pass,N,0,good condition,photos/V02_ALT-07.jpg,INSP-1
+V02,alternator,ALT-08,radial_play,0.036,N,0,light wear,,INSP-1
+V02,alternator,ALT-09,groove_wear,0.058,N,0,"clean, normal wear",photos/V02_ALT-09.jpg,INSP-1
+V02,alternator,ALT-10,radial_play,0.05,N,1,good condition,photos/V02_ALT-10.jpg,INSP-2
+V03,starter,STR-01,crack_check,fail,Y,0,hairline crack near mounting boss,photos/V03_STR-01.jpg,INSP-3
+V03,starter,STR-02,commutator_diameter,31.43,N,2,looks ok,photos/V03_STR-02.jpg,INSP-1
+V03,starter,STR-03,brush_length,10.31,N,0,"clean, normal wear",photos/V03_STR-03.jpg,INSP-2
+V03,starter,STR-04,corrosion_level,1,N,1,"clean, normal wear",photos/V03_STR-04.jpg,INSP-1
+V03,starter,STR-05,pull_in_coil_resistance,0.48,N,0,good condition,photos/V03_STR-05.jpg,INSP-3
+V03,starter,STR-06,pinion_tooth_wear,0.213,N,0,light wear,photos/V03_STR-06.jpg,INSP-3
+V03,starter,STR-07,gear_backlash,0.188,N,0,good condition,photos/V03_STR-07.jpg,INSP-2
+V03,starter,STR-08,radial_play,0.121,N,0,within spec by eye,photos/V03_STR-08.jpg,INSP-2
+V03,starter,STR-09,crack_check,pass,N,0,light wear,photos/V03_STR-09.jpg,INSP-2
+V03,starter,STR-10,corrosion_level,0,N,0,light wear,photos/V03_STR-10.jpg,INSP-2
+V03,alternator,ALT-01,crack_check,pass,N,0,"clean, normal wear",photos/V03_ALT-01.jpg,INSP-3
+V03,alternator,ALT-02,crack_check,pass,N,1,good condition,photos/V03_ALT-02.jpg,INSP-2
+V03,alternator,ALT-03,slip_ring_diameter,14.03,N,2,light wear,photos/V03_ALT-03.jpg,INSP-2
+V03,alternator,ALT-04,insulation_test,pass,N,0,"clean, normal wear",photos/V03_ALT-04.jpg,INSP-1
+V03,alternator,ALT-05,exposed_brush_length,8.59,N,1,light wear,photos/V03_ALT-05.jpg,INSP-3
+V03,alternator,ALT-06,regulated_voltage,14.24,N,1,within spec by eye,photos/V03_ALT-06.jpg,INSP-3
+V03,alternator,ALT-07,diode_test,pass,N,0,good condition,photos/V03_ALT-07.jpg,INSP-3
+V03,alternator,ALT-08,radial_play,0.1,N,1,good condition,photos/V03_ALT-08.jpg,INSP-3
+V03,alternator,ALT-09,groove_wear,0.274,N,0,"clean, normal wear",photos/V03_ALT-09.jpg,INSP-1
+V03,alternator,ALT-10,radial_play,0.063,N,1,"clean, normal wear",photos/V03_ALT-10.jpg,INSP-2
+V04,starter,STR-01,crack_check,pass,N,0,good condition,photos/V04_STR-01.jpg,INSP-3
+V04,starter,STR-02,commutator_diameter,31.77,N,0,good condition,photos/V04_STR-02.jpg,INSP-1
+V04,starter,STR-03,brush_length,9.71,N,1,within spec by eye,photos/V04_STR-03.jpg,INSP-2
+V04,starter,STR-04,corrosion_level,1,N,1,within spec by eye,photos/V04_STR-04.jpg,INSP-3
+V04,starter,STR-05,pull_in_coil_resistance,0.37,N,0,within spec by eye,photos/V04_STR-05.jpg,INSP-2
+V04,starter,STR-06,pinion_tooth_wear,0.135,N,1,"clean, normal wear",photos/V04_STR-06.jpg,INSP-3
+V04,starter,STR-07,gear_backlash,0.227,N,1,"clean, normal wear",photos/V04_STR-07.jpg,INSP-2
+V04,starter,STR-08,radial_play,0.139,N,1,"clean, normal wear",photos/V04_STR-08.jpg,INSP-2
+V04,starter,STR-09,crack_check,pass,N,1,light wear,photos/V04_STR-09.jpg,INSP-1
+V04,starter,STR-10,corrosion_level,0,N,0,light wear,photos/V04_STR-10.jpg,INSP-2
+V05,starter,STR-01,crack_check,pass,N,1,"clean, normal wear",photos/V05_STR-01.jpg,INSP-2
+V05,starter,STR-02,commutator_diameter,31.61,N,0,looks ok,photos/V05_STR-02.jpg,INSP-2
+V05,starter,STR-03,brush_length,7.9,N,1,"looks ok, brushes clean",photos/V05_STR-03.jpg,INSP-3
+V05,starter,STR-04,corrosion_level,1,N,1,looks ok,photos/V05_STR-04.jpg,INSP-2
+V05,starter,STR-05,pull_in_coil_resistance,0.43,N,0,good condition,photos/V05_STR-05.jpg,INSP-3
+V05,starter,STR-06,pinion_tooth_wear,0.102,N,1,good condition,photos/V05_STR-06.jpg,INSP-3
+V05,starter,STR-07,gear_backlash,0.252,N,1,scoring on surface,,INSP-2
+V05,starter,STR-08,radial_play,0.121,N,0,"clean, normal wear",photos/V05_STR-08.jpg,INSP-1
+V05,starter,STR-09,crack_check,fail,Y,0,hairline crack near mounting boss,photos/V05_STR-09.jpg,INSP-3
+V05,starter,STR-10,corrosion_level,0,N,0,"clean, normal wear",photos/V05_STR-10.jpg,INSP-3
+V05,alternator,ALT-01,crack_check,pass,N,1,light wear,photos/V05_ALT-01.jpg,INSP-1
+V05,alternator,ALT-02,crack_check,pass,N,0,light wear,photos/V05_ALT-02.jpg,INSP-3
+V05,alternator,ALT-03,slip_ring_diameter,14.26,N,0,good condition,photos/V05_ALT-03.jpg,INSP-3
+V05,alternator,ALT-04,insulation_test,pass,N,1,light wear,,INSP-3
+V05,alternator,ALT-05,exposed_brush_length,5.06,N,0,"clean, normal wear",photos/V05_ALT-05.jpg,INSP-1
+V05,alternator,ALT-06,regulated_voltage,14.32,N,1,looks ok,photos/V05_ALT-06.jpg,INSP-1
+V05,alternator,ALT-07,diode_test,pass,N,0,light wear,photos/V05_ALT-07.jpg,INSP-3
+V05,alternator,ALT-08,radial_play,0.048,N,1,looks ok,photos/V05_ALT-08.jpg,INSP-3
+V05,alternator,ALT-09,groove_wear,0.36,N,1,looks ok,photos/V05_ALT-09.jpg,INSP-2
+V05,alternator,ALT-10,radial_play,0.06,N,0,within spec by eye,photos/V05_ALT-10.jpg,INSP-2
+V06,starter,STR-01,crack_check,pass,N,0,good condition,photos/V06_STR-01.jpg,INSP-1
+V06,starter,STR-02,commutator_diameter,31.54,N,1,light wear,photos/V06_STR-02.jpg,INSP-2
+V06,starter,STR-03,brush_length,11.33,N,0,good condition,,INSP-2
+V06,starter,STR-04,corrosion_level,0,N,0,light wear,photos/V06_STR-04.jpg,INSP-2
+V06,starter,STR-05,pull_in_coil_resistance,0.44,N,0,looks ok,photos/V06_STR-05.jpg,INSP-2
+V06,starter,STR-06,pinion_tooth_wear,0.254,N,1,within spec by eye,photos/V06_STR-06.jpg,INSP-1
+V06,starter,STR-07,gear_backlash,0.166,N,0,light wear,photos/V06_STR-07.jpg,INSP-2
+V06,starter,STR-08,radial_play,0.148,N,1,light wear,photos/V06_STR-08.jpg,INSP-3
+V06,starter,STR-09,crack_check,pass,N,0,looks ok,photos/V06_STR-09.jpg,INSP-3
+V06,starter,STR-10,corrosion_level,1,N,1,good condition,,INSP-3
+V06,alternator,ALT-01,crack_check,pass,N,0,light wear,photos/V06_ALT-01.jpg,INSP-2
+V06,alternator,ALT-02,crack_check,pass,N,0,good condition,photos/V06_ALT-02.jpg,INSP-1
+V06,alternator,ALT-03,slip_ring_diameter,14.1,N,1,within spec by eye,photos/V06_ALT-03.jpg,INSP-1
+V06,alternator,ALT-04,insulation_test,pass,N,0,light wear,photos/V06_ALT-04.jpg,INSP-3
+V06,alternator,ALT-05,exposed_brush_length,5.49,N,0,within spec by eye,photos/V06_ALT-05.jpg,INSP-3
+V06,alternator,ALT-06,regulated_voltage,14.32,N,1,looks ok,photos/V06_ALT-06.jpg,INSP-1
+V06,alternator,ALT-07,diode_test,pass,N,1,within spec by eye,photos/V06_ALT-07.jpg,INSP-1
+V06,alternator,ALT-08,radial_play,0.103,N,0,worn unevenly,photos/V06_ALT-08.jpg,INSP-2
+V06,alternator,ALT-09,groove_wear,0.07,N,0,light wear,photos/V06_ALT-09.jpg,INSP-1
+V06,alternator,ALT-10,radial_play,0.039,N,2,light wear,photos/V06_ALT-10.jpg,INSP-1
+V07,alternator,ALT-01,crack_check,pass,N,1,good condition,photos/V07_ALT-01.jpg,INSP-1
+V07,alternator,ALT-02,crack_check,pass,N,1,light wear,photos/V07_ALT-02.jpg,INSP-1
+V07,alternator,ALT-03,slip_ring_diameter,14.13,N,0,looks ok,photos/V07_ALT-03.jpg,INSP-2
+V07,alternator,ALT-04,insulation_test,fail,N,0,within spec by eye,photos/V07_ALT-04.jpg,INSP-3
+V07,alternator,ALT-05,exposed_brush_length,5.5,N,1,light wear,photos/V07_ALT-05.jpg,INSP-2
+V07,alternator,ALT-06,regulated_voltage,14.5,N,2,within spec by eye,photos/V07_ALT-06.jpg,INSP-1
+V07,alternator,ALT-07,diode_test,pass,N,0,light wear,photos/V07_ALT-07.jpg,INSP-3
+V07,alternator,ALT-08,radial_play,0.054,N,0,light wear,photos/V07_ALT-08.jpg,INSP-2
+V07,alternator,ALT-09,groove_wear,0.148,N,0,within spec by eye,photos/V07_ALT-09.jpg,INSP-1
+V07,alternator,ALT-10,radial_play,0.057,N,0,"clean, normal wear",photos/V07_ALT-10.jpg,INSP-1
+V08,starter,STR-01,crack_check,pass,N,0,light wear,photos/V08_STR-01.jpg,INSP-2
+V08,starter,STR-02,commutator_diameter,31.37,N,0,within spec by eye,photos/V08_STR-02.jpg,INSP-3
+V08,starter,STR-03,brush_length,9.13,N,1,within spec by eye,photos/V08_STR-03.jpg,INSP-2
+V08,starter,STR-04,corrosion_level,0,N,0,within spec by eye,photos/V08_STR-04.jpg,INSP-2
+V08,starter,STR-05,pull_in_coil_resistance,0.41,N,0,within spec by eye,photos/V08_STR-05.jpg,INSP-2
+V08,starter,STR-06,pinion_tooth_wear,0.116,N,0,good condition,photos/V08_STR-06.jpg,INSP-3
+V08,starter,STR-07,gear_backlash,0.134,N,0,within spec by eye,,INSP-2
+V08,starter,STR-08,radial_play,0.159,N,0,worn unevenly,photos/V08_STR-08.jpg,INSP-2
+V08,starter,STR-09,crack_check,fail,Y,1,hairline crack near mounting boss,photos/V08_STR-09.jpg,INSP-3
+V08,starter,STR-10,corrosion_level,0,N,0,looks ok,photos/V08_STR-10.jpg,INSP-3
+V08,alternator,ALT-01,crack_check,fail,Y,1,hairline crack near mounting boss,photos/V08_ALT-01.jpg,INSP-2
+V08,alternator,ALT-02,crack_check,pass,N,1,within spec by eye,photos/V08_ALT-02.jpg,INSP-3
+V08,alternator,ALT-03,slip_ring_diameter,14.3,N,0,looks ok,photos/V08_ALT-03.jpg,INSP-3
+V08,alternator,ALT-04,insulation_test,fail,N,1,looks ok,photos/V08_ALT-04.jpg,INSP-3
+V08,alternator,ALT-05,exposed_brush_length,7.37,N,0,light wear,photos/V08_ALT-05.jpg,INSP-1
+V08,alternator,ALT-06,regulated_voltage,14.7,N,1,looks ok,photos/V08_ALT-06.jpg,INSP-1
+V08,alternator,ALT-07,diode_test,pass,N,2,good condition,photos/V08_ALT-07.jpg,INSP-1
+V08,alternator,ALT-08,radial_play,0.095,N,0,slight noise when spun by hand,photos/V08_ALT-08.jpg,INSP-3
+V08,alternator,ALT-09,groove_wear,0.315,N,1,light wear,photos/V08_ALT-09.jpg,INSP-3
+V08,alternator,ALT-10,radial_play,0.037,N,0,within spec by eye,photos/V08_ALT-10.jpg,INSP-2
+V10,starter,STR-01,crack_check,pass,N,0,"clean, normal wear",photos/V10_STR-01.jpg,INSP-2
+V10,starter,STR-02,commutator_diameter,31.8,N,0,"clean, normal wear",photos/V10_STR-02.jpg,INSP-2
+V10,starter,STR-03,brush_length,10.11,N,1,looks ok,photos/V10_STR-03.jpg,INSP-2
+V10,starter,STR-04,corrosion_level,0,N,0,good condition,photos/V10_STR-04.jpg,INSP-3
+V10,starter,STR-05,pull_in_coil_resistance,0.48,N,0,good condition,photos/V10_STR-05.jpg,INSP-1
+V10,starter,STR-06,pinion_tooth_wear,0.165,N,0,good condition,photos/V10_STR-06.jpg,INSP-3
+V10,starter,STR-07,gear_backlash,0.153,N,1,within spec by eye,photos/V10_STR-07.jpg,INSP-2
+V10,starter,STR-08,radial_play,0.134,N,1,"clean, normal wear",photos/V10_STR-08.jpg,INSP-1
+V10,starter,STR-09,crack_check,pass,N,1,looks ok,photos/V10_STR-09.jpg,INSP-3
+V10,starter,STR-10,corrosion_level,1,N,1,good condition,photos/V10_STR-10.jpg,INSP-3
+V10,alternator,ALT-01,crack_check,pass,N,0,light wear,photos/V10_ALT-01.jpg,INSP-1
+V10,alternator,ALT-02,crack_check,pass,N,0,looks ok,photos/V10_ALT-02.jpg,INSP-3
+V10,alternator,ALT-03,slip_ring_diameter,14.28,N,1,good condition,,INSP-3
+V10,alternator,ALT-04,insulation_test,pass,N,0,light wear,photos/V10_ALT-04.jpg,INSP-1
+V10,alternator,ALT-05,exposed_brush_length,8.66,N,1,"clean, normal wear",photos/V10_ALT-05.jpg,INSP-1
+V10,alternator,ALT-06,regulated_voltage,14.31,N,1,good condition,photos/V10_ALT-06.jpg,INSP-3
+V10,alternator,ALT-07,diode_test,fail,N,0,looks ok,photos/V10_ALT-07.jpg,INSP-2
+V10,alternator,ALT-08,radial_play,0.069,N,0,"clean, normal wear",photos/V10_ALT-08.jpg,INSP-1
+V10,alternator,ALT-09,groove_wear,0.352,N,0,light wear,photos/V10_ALT-09.jpg,INSP-2
+V10,alternator,ALT-10,radial_play,0.047,N,0,looks ok,photos/V10_ALT-10.jpg,INSP-1
+V11,starter,STR-01,crack_check,pass,N,0,looks ok,,INSP-1
+V11,starter,STR-02,commutator_diameter,31.51,N,1,light wear,,INSP-1
+V11,starter,STR-03,brush_length,12.67,N,1,"clean, normal wear",,INSP-1
+V11,starter,STR-04,corrosion_level,0,N,0,"clean, normal wear",,INSP-3
+V11,starter,STR-05,pull_in_coil_resistance,0.3,N,1,good condition,,INSP-1
+V11,starter,STR-06,pinion_tooth_wear,0.099,N,0,within spec by eye,,INSP-2
+V11,starter,STR-07,gear_backlash,0.236,N,1,looks ok,,INSP-2
+V11,starter,STR-08,radial_play,0.119,N,1,looks ok,,INSP-3
+V11,starter,STR-09,crack_check,pass,N,1,good condition,,INSP-3
+V11,starter,STR-10,corrosion_level,0,N,0,looks ok,,INSP-3
+V11,alternator,ALT-01,crack_check,pass,N,0,good condition,,INSP-2
+V11,alternator,ALT-02,crack_check,pass,N,1,within spec by eye,,INSP-3
+V11,alternator,ALT-03,slip_ring_diameter,14.26,N,1,"clean, normal wear",,INSP-2
+V11,alternator,ALT-04,insulation_test,fail,N,1,within spec by eye,,INSP-1
+V11,alternator,ALT-05,exposed_brush_length,9.21,N,1,within spec by eye,,INSP-2
+V11,alternator,ALT-06,regulated_voltage,14.61,N,0,within spec by eye,,INSP-3
+V11,alternator,ALT-07,diode_test,pass,N,2,good condition,,INSP-1
+V11,alternator,ALT-08,radial_play,0.037,N,1,looks ok,,INSP-1
+V11,alternator,ALT-09,groove_wear,0.202,N,0,"clean, normal wear",,INSP-1
+V11,alternator,ALT-10,radial_play,0.029,N,0,looks ok,,INSP-1
+V12,alternator,ALT-01,crack_check,pass,N,2,light wear,photos/V12_ALT-01.jpg,INSP-2
+V12,alternator,ALT-02,crack_check,pass,N,0,light wear,photos/V12_ALT-02.jpg,INSP-2
+V12,alternator,ALT-03,slip_ring_diameter,14.23,N,0,light wear,photos/V12_ALT-03.jpg,INSP-2
+V12,alternator,ALT-04,insulation_test,pass,N,0,"clean, normal wear",photos/V12_ALT-04.jpg,INSP-1
+V12,alternator,ALT-05,exposed_brush_length,6.55,N,1,good condition,photos/V12_ALT-05.jpg,INSP-1
+V12,alternator,ALT-06,regulated_voltage,14.62,N,1,within spec by eye,photos/V12_ALT-06.jpg,INSP-3
+V12,alternator,ALT-07,diode_test,pass,N,0,within spec by eye,photos/V12_ALT-07.jpg,INSP-3
+V12,alternator,ALT-08,radial_play,0.061,N,0,"clean, normal wear",photos/V12_ALT-08.jpg,INSP-3
+V12,alternator,ALT-09,groove_wear,0.166,N,0,within spec by eye,photos/V12_ALT-09.jpg,INSP-3
+V12,alternator,ALT-10,radial_play,0.039,N,0,looks ok,photos/V12_ALT-10.jpg,INSP-3

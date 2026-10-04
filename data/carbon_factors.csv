@@ -1,0 +1,10 @@
+material,kgco2e_per_kg_new,reuse_share_of_new,note
+steel,1.9,0.15,"approx. global average, primary route mix"
+aluminium,15.0,0.1,approx. primary aluminium
+copper,4.0,0.15,approx. refined copper
+electronics,60.0,0.1,"rough, per kg of assembly"
+steel/copper,2.4,0.15,blend
+aluminium/copper,10.0,0.12,blend
+plastic/glass,3.0,0.1,blend
+lead,1.5,0.3,"recycled, not reused"
+steel/PGM,8.0,0.2,"PGM recovery, rough"

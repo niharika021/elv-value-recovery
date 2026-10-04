@@ -1,0 +1,10 @@
+rule_id,check,evidence_field,severity,source
+C01,"Depollution completed before dismantling (fuel, oils, coolant, refrigerant, battery, airbags)",depollution_record_id,red,"Environment Protection (End-of-Life Vehicles) Rules, 2025; RVSF operating norms"
+C02,Certificate of Deposit issued and vehicle deregistered before dismantling,certificate_of_deposit_no,red,"Motor Vehicles (Registration and Functions of Vehicle Scrapping Facility) Rules, 2021"
+C03,Weighbridge record of steel sent for recycling (basis for EPR certificate),steel_weighbridge_ticket,red,"ELV Rules 2025, EPR on steel recovered"
+C04,"Hazardous fractions (oil, battery, refrigerant) sent to an authorised recycler with manifest",hazwaste_manifest_no,amber,Hazardous and Other Wastes Rules; ELV Rules 2025
+C05,Every harvested component traceable to its source vehicle,trace_tags_complete,amber,IATF 16949-style traceability expectation
+C06,"Every reused part graded against a documented limit, with measurement evidence",grading_evidence_complete,amber,BSI PAS 3100 (remanufactured parts) principle
+C07,Reused / remanufactured parts labelled so they cannot be mistaken for new,reman_label_printed,amber,FTC guides on rebuilt/remanufactured auto parts (disclosure principle)
+C08,Every engineer override logged with a reason,overrides_logged,amber,Internal audit trail requirement
+C09,Catalytic converter sent to an authorised PGM recycler,pgm_recycler_id,amber,ELV Rules 2025 (channelling to registered recyclers)

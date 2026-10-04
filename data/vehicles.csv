@@ -1,0 +1,13 @@
+vehicle_id,intake_date,segment,model_code,fuel,model_year,kerb_weight_kg,steel_fraction,aluminium_kg,copper_kg,condition,dereg_status,informal_offer_inr,demo_story
+V01,2026-10-18,hatchback,HB-25,diesel,2007,859,0.662,29.9,12.4,"running, worn",deregistered,33000,
+V02,2026-10-20,sedan,SD-25,petrol,2008,1168,0.647,50.9,16.4,"running, worn",deregistered,41000,high-demand regulator on alternator
+V03,2026-10-11,sedan,SD-22,petrol,2006,1173,0.634,58.0,10.1,"non-running, intact",deregistered,41500,catalytic converter worth ~half the steel value
+V04,2026-10-08,hatchback,HB-26,diesel,2005,944,0.641,59.2,13.1,"non-running, intact",pending,33500,
+V05,2026-10-21,suv,SV-25,petrol,2009,1451,0.623,53.3,18.2,"running, worn",deregistered,47000,"starter brushes below drawing minimum, note says looks ok"
+V06,2026-10-10,hatchback,HB-24,petrol,2008,951,0.642,44.5,8.9,"accident, front damage",deregistered,35000,front-end parts lost; harvest rear only
+V07,2026-10-19,sedan,SD-12,petrol,2007,1135,0.66,51.9,15.3,"non-running, intact",deregistered,40000,COMPLIANCE RED: no depollution record
+V08,2026-10-03,suv,SV-24,diesel,2010,1444,0.668,63.7,14.5,"running, worn",deregistered,47000,borderline alternator bearing: engineer override demo
+V09,2026-10-18,hatchback,HB-23,petrol,2006,876,0.62,49.8,10.9,"flood damaged, heavy rust",deregistered,31500,harvest not worth the labour
+V10,2026-10-08,sedan,SD-24,petrol,2009,1136,0.654,41.2,10.1,"running, worn",deregistered,41000,catalytic converter missing (removed before intake)
+V11,2026-10-18,hatchback,SV-14,petrol,2011,898,0.666,46.7,10.5,"non-running, intact",deregistered,33000,"DATA QUALITY: model code mislabelled, photos missing"
+V12,2026-10-22,suv,SV-21,petrol,2008,1363,0.646,52.7,14.7,"non-running, intact",deregistered,47000,

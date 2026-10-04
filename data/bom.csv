@@ -1,0 +1,21 @@
+unit_type,part_no,part_name,material,weight_kg,critical,measure,unit,nominal,drawing_no
+starter,STR-01,Drive-end housing,die-cast aluminium,0.45,Y,crack_check,-,,DWG-STR-01
+starter,STR-02,Armature (commutator),steel/copper,0.9,Y,commutator_diameter,mm,32.0,DWG-STR-02
+starter,STR-03,Carbon brush set,carbon/copper,0.05,N,brush_length,mm,14.0,DWG-STR-03
+starter,STR-04,Field frame,steel,0.85,Y,corrosion_level,0-3,0.0,DWG-STR-04
+starter,STR-05,Solenoid switch,steel/copper,0.4,Y,pull_in_coil_resistance,ohm,0.4,DWG-STR-05
+starter,STR-06,Pinion and overrunning clutch,steel,0.3,Y,pinion_tooth_wear,mm,0.0,DWG-STR-06
+starter,STR-07,Planetary gear set,steel,0.25,Y,gear_backlash,mm,0.1,DWG-STR-07
+starter,STR-08,Armature bushings,sintered bronze,0.02,N,radial_play,mm,0.05,DWG-STR-08
+starter,STR-09,Brush holder plate,phenolic/steel,0.1,N,crack_check,-,,DWG-STR-09
+starter,STR-10,Commutator-end cover,steel,0.15,N,corrosion_level,0-3,0.0,DWG-STR-10
+alternator,ALT-01,Front housing,die-cast aluminium,0.7,Y,crack_check,-,,DWG-ALT-01
+alternator,ALT-02,Rear housing,die-cast aluminium,0.6,Y,crack_check,-,,DWG-ALT-02
+alternator,ALT-03,Rotor (slip rings),steel/copper,1.1,Y,slip_ring_diameter,mm,14.4,DWG-ALT-03
+alternator,ALT-04,Stator winding,steel/copper,1.2,Y,insulation_test,-,,DWG-ALT-04
+alternator,ALT-05,Carbon brushes,carbon/copper,0.03,N,exposed_brush_length,mm,10.5,DWG-ALT-05
+alternator,ALT-06,Voltage regulator,electronics,0.08,Y,regulated_voltage,V,14.5,DWG-ALT-06
+alternator,ALT-07,Rectifier bridge,electronics,0.15,Y,diode_test,-,,DWG-ALT-07
+alternator,ALT-08,Drive-end bearing,bearing steel,0.1,Y,radial_play,mm,0.02,DWG-ALT-08
+alternator,ALT-09,Pulley / OAP clutch,steel,0.35,N,groove_wear,mm,0.0,DWG-ALT-09
+alternator,ALT-10,Slip-ring-end bearing,bearing steel,0.05,Y,radial_play,mm,0.02,DWG-ALT-10

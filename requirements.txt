@@ -1,0 +1,10 @@
+# Day 1: data + drawings
+pandas>=2.2
+numpy>=1.26
+reportlab>=4.0
+# Coming next (engines, agents, cloud)
+# ortools>=9.10
+# google-adk
+# google-cloud-bigquery
+# google-cloud-storage
+# google-cloud-firestore

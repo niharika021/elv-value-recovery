@@ -1,0 +1,8 @@
+part_no,part_name,new_price_inr,refurb_cost_inr,demand_per_month,new_lead_time_days
+ALT-06,Voltage regulator,2400,0,60,90
+STR-05,Solenoid switch,1500,150,45,30
+STR-02,Armature,1900,300,25,45
+ALT-03,Rotor,2100,350,20,45
+ALT-04,Stator,1700,250,18,40
+ALT-01,Front housing,900,120,15,60
+STR-01,Drive-end housing,700,100,15,60

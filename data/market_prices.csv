@@ -1,0 +1,9 @@
+item,value_inr,note
+steel_scrap_per_kg,28,"shredded ELV steel, net of yield loss; synthetic"
+aluminium_scrap_per_kg,110,mixed cast aluminium; synthetic
+copper_scrap_per_kg,220,"insulated wiring harness, per kg of harness; synthetic"
+epr_certificate_per_vehicle,5500,NITI Aayog Jan 2026 estimate
+informal_price_gap_midrange,15000,NITI Aayog Jan 2026 estimate
+processing_cost_per_vehicle,13000,"depollution, compliance, admin, logistics, capex amortisation; synthetic"
+labour_rate_per_hour,360,dismantling technician; synthetic
+target_margin_pct,10,RVSF margin on revenue; synthetic
