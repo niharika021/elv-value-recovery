@@ -94,7 +94,8 @@ W, H = landscape(A4)
 for part in bom.itertuples():
     r = rules.loc[part.part_no]
     f = OUT / f"{part.drawing_no}.pdf"
-    c = canvas.Canvas(str(f), pagesize=landscape(A4))
+    # invariant: fixed creation date and content-derived ID, so reruns are byte-identical
+    c = canvas.Canvas(str(f), pagesize=landscape(A4), invariant=1)
     c.setTitle(f"{part.drawing_no} {part.part_name}")
     c.setLineWidth(1.5); c.rect(10 * mm, 10 * mm, W - 20 * mm, H - 20 * mm)
     view(c, part, 25 * mm, 85 * mm)
