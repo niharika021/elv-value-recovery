@@ -2,10 +2,10 @@
 pandas>=2.2
 numpy>=1.26
 reportlab>=4.0
-# Day 3: engines
+# Day 3-5: engines
 pytest>=8.0
-# Coming next (engines, agents, cloud)
-# ortools>=9.10
+ortools>=9.10
+# Coming next (agents, cloud)
 # google-adk
 # google-cloud-bigquery
 # google-cloud-storage

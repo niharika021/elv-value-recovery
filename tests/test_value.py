@@ -146,3 +146,8 @@ def test_v02_regulator_is_perfect_and_in_demand(month):
 def test_teardown_review_reaches_the_value_lines(month):
     assert month["V05"].lines.set_index("component").loc["starter_motor", "teardown"] == "engineer_review: STR-03"
     assert month["V04"].lines.set_index("component").loc["alternator", "teardown"] == "not inspected"  # grade C
+
+
+def test_a_plan_missing_a_vehicle_is_refused():
+    with pytest.raises(PricingError):
+        value_month({"V01": ["ecu"]}, with_grading=False)

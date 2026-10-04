@@ -12,7 +12,7 @@ This app helps an RVSF earn more from every vehicle:
 
 Design rule: **agents read and explain; fixed engines own every number; an engineer approves every decision.**
 
-> Status: Day 4 (grading and value engines). Harvest planner, agents and the web app follow; see the timeline in the project plan.
+> Status: Day 5 (grading, value and harvest-planner engines). Agents and the web app follow; see the timeline in the project plan.
 
 ---
 
@@ -37,6 +37,7 @@ python scripts/make_drawings.py
 python scripts/check_values.py
 python -m app.engines.grading     # Day 3: grade every teardown part
 python -m app.engines.value       # Day 4: offer, EPR steel and CO2 per vehicle (add V03 for one vehicle)
+python -m app.engines.planner     # Day 5: best harvest at 100%, 75% and 50% of the labour needed
 python -m pytest -q
 ```
 
@@ -94,6 +95,20 @@ It also reports **steel to the recycler** (body steel less the steel leaving in 
 Grade C, missing, or always-removed parts cannot be harvested; asking for one is an error, not a zero.
 
 Synthetic month: 8,385 kg steel to recyclers, 2,132 kg CO₂ avoided.
+
+### Harvest planner (`app/engines/planner.py`)
+
+OR-Tools CP-SAT chooses which parts to pull across the month to maximise the total offer, under optional limits: **technician minutes**, **blocked vehicles** (e.g. a red compliance check), and **engineer decisions** (parts excluded or required). It only chooses; the value engine prices the plan. Contradictory instructions, or required parts that do not fit, are refused rather than half-met.
+
+With no limits the plan equals the value engine's default rule. Plans are proven optimal (tests check them against an exact knapsack), and every positive part left on a vehicle says why.
+
+| Labour available | Parts | Harvest gain | Gap closed |
+|---|---|---|---|
+| 1,240 min (all) | 58 | ₹75,460 | 39% |
+| 930 min (75%) | 46 | ₹67,845 | 35% |
+| 620 min (50%) | 30 | ₹54,366 | 28% |
+
+On this data, "best value per minute first" lands within ~₹100 of optimal; the solver earns its place by guaranteeing the plan and handling engineer decisions and future limits (per day, per technician) without special cases.
 
 ### Economics check (`scripts/check_values.py`)
 

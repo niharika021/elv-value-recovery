@@ -212,8 +212,11 @@ def attach_grading(lines: pd.DataFrame, vehicle_id: str, units: pd.DataFrame, gr
 
 
 def value_month(harvests: dict[str, list[str]] | None = None, with_grading: bool = True) -> list[VehicleValue]:
-    """Value every vehicle in the synthetic month. harvests overrides the default rule per vehicle."""
+    """Value every vehicle in the synthetic month. harvests=None uses the default rule; a harvests
+    dict must name every vehicle, so a vehicle missing from a plan is never silently re-planned."""
     veh = pd.read_csv(DATA / "vehicles.csv")
+    if harvests is not None and set(veh.vehicle_id) - set(harvests):
+        raise PricingError(f"Harvest plan has no entry for {sorted(set(veh.vehicle_id) - set(harvests))}")
     comp = pd.read_csv(DATA / "components.csv")
     prices, carbon = load_prices(), load_carbon()
     if with_grading:
@@ -223,7 +226,7 @@ def value_month(harvests: dict[str, list[str]] | None = None, with_grading: bool
     out = []
     for v in veh.itertuples(index=False):
         vv = value_vehicle(v, comp[comp.vehicle_id == v.vehicle_id], prices, carbon,
-                           (harvests or {}).get(v.vehicle_id))
+                           None if harvests is None else harvests[v.vehicle_id])
         if with_grading:
             vv = replace(vv, lines=attach_grading(vv.lines, v.vehicle_id, units, grades, pm))
         out.append(vv)
