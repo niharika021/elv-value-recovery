@@ -12,7 +12,7 @@ This app helps an RVSF earn more from every vehicle:
 
 Design rule: **agents read and explain; fixed engines own every number; an engineer approves every decision.**
 
-> Status: Day 5 (grading, value and harvest-planner engines). Agents and the web app follow; see the timeline in the project plan.
+> Status: Day 7 (engines, Gemini drawing reader, compliance check, audit pack). Conversational agents and the web app follow; see the timeline in the project plan.
 
 ---
 
@@ -38,6 +38,9 @@ python scripts/check_values.py
 python -m app.engines.grading     # Day 3: grade every teardown part
 python -m app.engines.value       # Day 4: offer, EPR steel and CO2 per vehicle (add V03 for one vehicle)
 python -m app.engines.planner     # Day 5: best harvest at 100%, 75% and 50% of the labour needed
+python -m app.agents.drawing_reader  # Day 6: Gemini reads the 20 drawings (needs .env, see .env.example)
+python -m app.engines.compliance  # Day 7: red / amber / green per vehicle
+python -m app.engines.audit       # Day 7: out/audit/V01.json ... one audit pack per vehicle
 python -m pytest -q
 ```
 
@@ -109,6 +112,21 @@ With no limits the plan equals the value engine's default rule. Plans are proven
 | 620 min (50%) | 30 | ₹54,366 | 28% |
 
 On this data, "best value per minute first" lands within ~₹100 of optimal; the solver earns its place by guaranteeing the plan and handling engineer decisions and future limits (per day, per technician) without special cases.
+
+### Drawing reader (`app/agents/drawing_reader.py`) and rule check (`app/engines/rule_check.py`)
+
+Gemini gets each drawing and the part's BOM row (never the limits) and returns the limit with a verbatim quote of the note. Fixed gates then reject any rule that fails grading validation, does not match the BOM's part / drawing / unit, quotes text that is not on the drawing, uses a limit number not in its quote, or names a failure action the quote does not. Accepted rules still await an engineer's sign-off.
+
+First live run (`gemini-3.8-flash`, Vertex AI, temperature 0): **20/20 limits and actions match the answer key**, including the 8.5 mm brush limit printed beside an 8.0 mm nominal dimension. **19/20 passed the gates**: STR-01 came back with unit `_` for `-` and was rejected for an engineer, as designed. Output: `data/extracted/rules_gemini.csv`.
+
+### Compliance check (`app/engines/compliance.py`)
+
+The demo rule pack against each vehicle's evidence: **pass / fail / n/a** per rule, and the stage a failure blocks. Depollution and Certificate of Deposit failures **block dismantling**, so the planner leaves V07 and V04 untouched; every other failure holds release. Rules that do not apply are n/a, not failures (V10 has no converter for C09; nothing harvested means no traceability to prove).
+Evidence is cross-checked: C06 fails when the grading engine finds a harvested part without its photo, even if the evidence file says complete.
+
+### Audit pack (`app/engines/audit.py`)
+
+One JSON per vehicle, assembled only from engine outputs: compliance by rule, harvest plan and what was left and why, value breakdown, component lines, grading evidence for harvested units, open items, sources, and an approval block awaiting an engineer.
 
 ### Economics check (`scripts/check_values.py`)
 
