@@ -12,7 +12,7 @@ This app helps an RVSF earn more from every vehicle:
 
 Design rule: **agents read and explain; fixed engines own every number; an engineer approves every decision.**
 
-> Status: Day 3 (grading engine). Value engine, harvest planner, agents and the web app follow; see the timeline in the project plan.
+> Status: Day 4 (grading and value engines). Harvest planner, agents and the web app follow; see the timeline in the project plan.
 
 ---
 
@@ -36,6 +36,7 @@ python scripts/generate_data.py
 python scripts/make_drawings.py
 python scripts/check_values.py
 python -m app.engines.grading     # Day 3: grade every teardown part
+python -m app.engines.value       # Day 4: offer, EPR steel and CO2 per vehicle (add V03 for one vehicle)
 python -m pytest -q
 ```
 
@@ -84,6 +85,15 @@ Inspector notes and photos **never change a verdict**; they raise flags, and any
 | `photo_missing` | no photo: grading evidence incomplete (compliance C06), not an engineering review | V11 |
 
 Synthetic month: 190 parts graded, 176 reuse, 7 replace, 7 scrap, 8 for engineer review.
+
+### Value engine (`app/engines/value.py`)
+
+Prices **any** harvest set for a vehicle: metal in the shredder stream + battery and converter + EPR certificate + harvested parts (sale value less labour and the scrap value they take out) - processing cost - margin = **offer**. With the default rule it reproduces `check_values.py` exactly, vehicle by vehicle; the Day 5 planner will choose the set instead.
+
+It also reports **steel to the recycler** (body steel less the steel leaving in reused parts: the weighbridge basis for EPR) and **CO₂ avoided** by reuse. Each line carries its reason, its teardown status from the grading engine, and the high-demand sub-parts that passed, with their margin (V02's regulator: 100%).
+Grade C, missing, or always-removed parts cannot be harvested; asking for one is an error, not a zero.
+
+Synthetic month: 8,385 kg steel to recyclers, 2,132 kg CO₂ avoided.
 
 ### Economics check (`scripts/check_values.py`)
 
