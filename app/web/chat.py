@@ -1,8 +1,10 @@
 """Chat with the ELV agents from the web app: one ADK session per browser tab, rate-limited.
 
 Each answer comes back with the agents and tools used and the grounding check, so the screen can
-show whether every number traced to a tool result. Sessions live in this process's memory;
-a restart starts fresh conversations (the decision log is unaffected).
+show whether every number traced to a tool result. Sessions live in this process's memory, so
+on Cloud Run the service is deployed with --session-affinity: a visitor's follow-up questions
+reach the instance holding their conversation. A restart starts fresh conversations (the
+decision log is unaffected).
 """
 from __future__ import annotations
 

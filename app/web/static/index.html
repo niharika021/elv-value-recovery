@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+  <div class="demo-banner" role="note"><b>DEMO DATA</b> · Synthetic vehicle, component, price and evidence dataset.
+    Engineering thresholds shown are demonstration rules and are not production or legal requirements.</div>
   <header class="top">
     <div>
       <h1>ELV Value Recovery Planner</h1>
@@ -19,7 +21,7 @@
     <section class="summary" aria-labelledby="summary-h">
       <h2 id="summary-h" class="sr-only">Month summary</h2>
       <div class="hero">
-        <div class="hero-label">Gap to the informal scrapper closed this month</div>
+        <div class="hero-label">Average informal-offer gap closed</div>
         <div class="hero-value" id="hero-value">–</div>
         <div class="hero-note" id="hero-note"></div>
       </div>
@@ -36,6 +38,13 @@
       </div>
       <div id="inbox-msg" class="msg" role="status" aria-live="polite"></div>
       <div id="inbox"></div>
+      <details class="rules-panel" id="rules-panel">
+        <summary><b>Drawing rules read by Gemini</b> <span id="rules-count" class="muted"></span></summary>
+        <p class="sub">Gemini's reading grades nothing until an engineer approves it; until then the baseline rule applies.
+          A reading that failed the fixed checks cannot be approved. Demonstration rules, not production or legal requirements.</p>
+        <div id="rules-msg" class="msg" role="status" aria-live="polite"></div>
+        <div id="rules"></div>
+      </details>
     </section>
 
     <section class="panel" aria-labelledby="chat-h">

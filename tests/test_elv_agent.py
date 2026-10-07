@@ -47,11 +47,10 @@ def test_unknown_part_is_an_error():
     assert "error" in tools.drawing_rule("XYZ-01")
 
 
-def test_drawing_rule_shows_gemini_beside_the_reference():
+def test_drawing_rule_shows_gemini_beside_the_baseline_and_what_grades_now():
     r = tools.drawing_rule("str-03")
-    assert r["reference"]["limit_1"] == 8.5
-    if "gemini" in r:   # present once the drawing reader has run
-        assert r["gemini"]["limit_1"] == 8.5 and "8.5" in r["gemini"]["evidence"]
+    assert r["baseline"] == "min 8.5 mm" and r["gemini"] == "min 8.5 mm" and "8.5" in r["evidence"]
+    assert r["state"] == "pending approval" and r["active_source"].startswith("baseline")   # not approved: not used
 
 
 def test_review_queue_has_the_planted_parts():

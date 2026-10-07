@@ -7,6 +7,10 @@ Gemini reads the limits; nothing here trusts it. A rule is accepted only if
   4. every limit number in the rule appears in that quote, and
   5. the quote names the action the rule says to take on failure (scrap / replace / refurbish).
 Accepted rules still wait for an engineer's approval before anything is graded with them.
+active_rules() decides which rule grades each part: the baseline (the reference rules, the demo's
+starting approved set) unless the latest rule_review for that part approves Gemini's reading.
+The approval carries a snapshot of the rule as approved, so re-running Gemini cannot silently
+change an approved limit, and the snapshot is re-validated before it is used.
 
 score_against_reference() compares with the answer key; that is for the demo, not production.
 """
@@ -115,3 +119,83 @@ def score_against_reference(checked: pd.DataFrame, reference: pd.DataFrame | Non
         rows.append(dict(part_no=r["part_no"], status=g.get("status", "missing"), correct=not wrong,
                          wrong="; ".join(wrong)))
     return pd.DataFrame(rows)
+
+
+# ---- engineer approval of Gemini's rules ---------------------------------------------------
+
+GEMINI_RULES = DATA / "extracted" / "rules_gemini.csv"
+BASELINE = "baseline (reference rules, demo starting set)"
+SNAPSHOT_FIELDS = RULE_FIELDS + ["evidence", "status", "problems", "source"]
+
+
+def gemini_rules(path: Path = GEMINI_RULES) -> dict[str, dict]:
+    """Gemini's readings by part_no, as written by the drawing reader (with gate status)."""
+    if not Path(path).exists():
+        return {}
+    df = pd.read_csv(path, dtype={"problems": str, "approved_by": str}).fillna({"problems": "", "evidence": ""})
+    return {r["part_no"]: {k: r.get(k) for k in SNAPSHOT_FIELDS} for r in df.to_dict("records")}
+
+
+def snapshot_rule(snap: dict, bom: pd.DataFrame | None = None):
+    """A GradingRule from an approval snapshot, re-validated by the grading engine (RuleError if not)."""
+    bom = pd.read_csv(DATA / "bom.csv") if bom is None else bom
+    one = pd.DataFrame([{k: snap.get(k) for k in RULE_FIELDS}])
+    return load_rules(one, bom[bom.part_no == snap.get("part_no")])[snap["part_no"]]
+
+
+def active_rules(decisions: list, bom: pd.DataFrame | None = None) -> tuple[dict, dict[str, str]]:
+    """(rules by part_no, where each came from). Unapproved, rejected or invalid Gemini readings
+    never grade anything; the part keeps its baseline rule."""
+    from app.engines.decisions import latest
+    bom = pd.read_csv(DATA / "bom.csv") if bom is None else bom
+    rules = load_rules(bom=bom)
+    source = {p: BASELINE for p in rules}
+    for (kind, _, part), d in latest(decisions).items():
+        if kind != "rule_review" or d.action != "approve":
+            continue
+        snap = (d.context or {}).get("rule") or {}
+        if snap.get("status") != "checked" or snap.get("part_no") != part:
+            continue
+        try:
+            rules[part] = snapshot_rule(snap, bom)
+        except RuleError:
+            continue
+        source[part] = f"Gemini ({snap.get('source', '')}), approved by {d.engineer} at {d.at}"
+    return rules, source
+
+
+def rule_reviews(decisions: list) -> list[dict]:
+    """Every part's rule status for the approval screen: baseline, Gemini's reading and its gates,
+    the latest engineer decision, and which rule grades the part now."""
+    from app.engines.decisions import latest
+    rules, source = active_rules(decisions)
+    base = load_rules()
+    gem = gemini_rules()
+    last = {part: d for (kind, _, part), d in latest(decisions).items() if kind == "rule_review"}
+    out = []
+    for part in sorted(base):
+        g, d = gem.get(part), last.get(part)
+        if g is None:
+            state = "no Gemini reading"
+        elif g["status"] != "checked":
+            state = "failed the fixed checks"
+        elif d is None:
+            state = "pending approval"
+        else:
+            state = "approved" if d.action == "approve" else "rejected"
+        gem_rule = None
+        if g is not None:
+            try:
+                gem_rule = snapshot_rule(g).describe()
+            except (RuleError, KeyError, TypeError, ValueError):
+                gem_rule = None
+        out.append(dict(
+            part_no=part, drawing_no=base[part].drawing_no, measure=base[part].measure,
+            baseline=base[part].describe(), baseline_action=base[part].verdict_if_fail,
+            gemini=gem_rule, gemini_action=g and g.get("verdict_if_fail"), gemini_unit=g and g.get("unit"),
+            evidence=g and g.get("evidence"), gates=g and g.get("status"), gate_problems=(g and g.get("problems")) or "",
+            source=g and g.get("source"), state=state,
+            decision=d and dict(action=d.action, engineer=d.engineer, reason=d.reason, at=d.at),
+            active=rules[part].describe(), active_source=source[part],
+        ))
+    return out

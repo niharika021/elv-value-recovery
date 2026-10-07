@@ -44,8 +44,9 @@ def _unknown(vehicle_id: str) -> dict:
 
 def month_overview() -> dict:
     """Every vehicle this month: owner offer (INR), scrap-only offer, informal scrapper's offer,
-    gap to the informal offer before harvesting (scrap-only) and after, compliance status, parts harvested, open items and approval status.
-    Includes month totals."""
+    gap to the informal offer before harvesting (scrap-only) and after, compliance status, parts
+    harvested, open items, approval status and next action. Includes month totals and averages:
+    gap closed, average offer before and after harvesting, total harvest gain, steel, CO2."""
     rows = [dict(vehicle_id=k, segment=p["vehicle"]["segment"], condition=p["vehicle"]["condition"],
                  offer_inr=p["value"]["offer"], offer_scrap_only_inr=p["value"]["offer_scrap_only"],
                  informal_offer_inr=p["value"]["informal_offer"],
@@ -53,12 +54,17 @@ def month_overview() -> dict:
                  gap_inr=p["value"]["gap"],
                  gap_closed_pct=p["value"]["gap_closed_pct"], compliance=p["compliance"]["status"],
                  parts_harvested=len(p["plan"]["harvest"]), open_items=len(p["open_items"]),
-                 approval=p["approval"]["status"]) for k, p in _packs().items()]
+                 approval=p["approval"]["status"], next_action=p["approval"]["next_action"],
+                 harvest_gain_inr=p["value"]["harvest_gain"]) for k, p in _packs().items()]
     t = pd.DataFrame(rows)
     before = (t.informal_offer_inr - t.offer_scrap_only_inr).mean()
     return _clean(dict(vehicles=rows, month=dict(
         average_gap_scrap_only_inr=round(before), average_gap_inr=round(t.gap_inr.mean()),
         gap_closed_pct=round(100 * (1 - t.gap_inr.mean() / before)),
+        average_offer_scrap_only_inr=round(t.offer_scrap_only_inr.mean()),
+        average_offer_inr=round(t.offer_inr.mean()),
+        harvest_gain_inr=round(t.harvest_gain_inr.sum()),
+        open_items=int(t.open_items.sum()),
         steel_to_recycler_kg=round(sum(p["value"]["steel_to_recycler_kg"] for p in _packs().values())),
         co2_avoided_kg=round(sum(p["value"]["co2_avoided_kg"] for p in _packs().values())),
         blocked_before_dismantling=sorted(dismantle_blocked()))))
@@ -127,28 +133,33 @@ def vehicle_grading(vehicle_id: str) -> dict:
 
 
 def review_queue() -> dict:
-    """Every part this month waiting for an engineer's decision, with why it was flagged."""
+    """Every part this month waiting for an engineer's decision, with why it was flagged, its
+    status, and the action that follows if the engine's verdict is accepted."""
+    from app.engines.decisions import NEXT_ACTION
     items = [dict(vehicle_id=k, part_no=g["part_no"], verdict=g["verdict"], flags=g["flags"], reason=g["reason"],
-                  inspector_note=g["inspector_note"])
+                  inspector_note=g["inspector_note"], status=g["status"], next_action=g["next_action"],
+                  limit=g["limit"], measured_value=g["measured_value"], drawing_no=g["drawing_no"],
+                  next_if_accepted=NEXT_ACTION.get(g["verdict"], "Hold"))
              for k, p in _packs().items() for g in p["grading"] if g["needs_review"]]
     return _clean(dict(count=len(items), parts=items))
 
 
 def drawing_rule(part_no: str) -> dict:
-    """A part's grading rule as Gemini read it from the drawing (with its verbatim quote and
-    whether it passed the fixed checks), beside the reference rule the engine grades with today."""
+    """A part's grading rule: the baseline (reference) rule, Gemini's reading of the drawing (verbatim
+    quote, whether it passed the fixed checks), the latest engineer approval or rejection, and which
+    rule actually grades the part now. Gemini's reading grades nothing until an engineer approves it."""
     pn = str(part_no).strip().upper()
-    ref = pd.read_csv(DATA / "grading_rules_reference.csv").set_index("part_no")
-    if pn not in ref.index:
+    status = next((r for r in rules_status()["rules"] if r["part_no"] == pn), None)
+    if status is None:
         return {"error": f"No part {part_no!r}. Parts are STR-01..STR-10 and ALT-01..ALT-10."}
-    out = dict(part_no=pn, reference=ref.loc[pn].to_dict())
-    f = DATA / "extracted" / "rules_gemini.csv"
-    if f.exists():
-        g = pd.read_csv(f).set_index("part_no")
-        if pn in g.index:
-            out["gemini"] = g.loc[pn][["limit_type", "limit_1", "limit_2", "verdict_if_fail", "evidence",
-                                       "status", "problems", "source", "approved_by"]].to_dict()
-    return _clean(out)
+    return status
+
+
+def rules_status() -> dict:
+    """Every part's rule status for the approval screen (also behind drawing_rule)."""
+    from app.engines.rule_check import rule_reviews
+    rows = rule_reviews(STORE.all())
+    return _clean(dict(rules=rows, pending=sum(r["state"] == "pending approval" for r in rows)))
 
 
 # ---- compliance agent ----------------------------------------------------------------------

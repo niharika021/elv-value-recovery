@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.elv_agent import tools
-from app.engines.audit import record_decision
+from app.engines.audit import decision_outcomes, record_decision
 from app.engines.decisions import Decision, DecisionError
 from app.web.chat import ChatLimit, ChatTimeout, RateLimiter, Sessions, answer
 
@@ -62,15 +62,30 @@ def what_if(capacity_minutes: int = Query(..., ge=0, le=100_000)) -> dict:
 
 @app.get("/api/inbox")
 def inbox() -> dict:
-    """What is waiting for an engineer: flagged parts, vehicles ready to sign, recent decisions."""
+    """What is waiting for an engineer: flagged parts, drawing rules, vehicles ready to sign, and
+    recent decisions with what each one led to (read back from the engines)."""
     packs = tools._packs()
+    log = tools.STORE.all()
+    outcome = decision_outcomes(log, packs)
+    recent = tools.decision_log()["decisions"][-20:][::-1]
+    ids = [d.id for d in log][-20:][::-1]
+    for r, i in zip(recent, ids):
+        r["outcome"] = outcome.get(i, "")
     return dict(
         reviews=tools.review_queue()["parts"],
+        rules_pending=tools.rules_status()["pending"],
         ready_to_sign=[dict(vehicle_id=k, offer=p["value"]["offer"], compliance=p["compliance"]["status"])
                        for k, p in packs.items() if p["approval"]["status"] == "ready"],
         signed=[dict(vehicle_id=k, **p["approval"]) for k, p in packs.items() if p["approval"]["status"] == "signed"],
-        recent=tools.decision_log()["decisions"][-20:][::-1],
+        recent=recent,
     )
+
+
+@app.get("/api/rules")
+def rules() -> dict:
+    """Gemini's drawing rules beside the baseline, with gate results, engineer decisions and the
+    rule that grades each part now."""
+    return tools.rules_status()
 
 
 @app.get("/api/decisions")
@@ -89,14 +104,18 @@ class DecisionIn(BaseModel):
 
 @app.post("/api/decisions", status_code=201)
 def decide(body: DecisionIn) -> dict:
-    vid = tools._vid(body.vehicle_id) or body.vehicle_id
+    """Record an engineer's decision (checked by the decision rules), then report what it led to."""
+    vid = "" if body.kind == "rule_review" else (tools._vid(body.vehicle_id) or body.vehicle_id.strip())
+    target = body.target.strip().upper() if body.kind == "rule_review" else body.target.strip()
     d = Decision(engineer=body.engineer.strip(), kind=body.kind, vehicle_id=vid, action=body.action,
-                 target=body.target.strip(), reason=body.reason.strip())
+                 target=target, reason=body.reason.strip())
     try:
         d = record_decision(tools.STORE, d)
     except DecisionError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    return dict(decision=asdict(d), approval=tools._packs()[vid]["approval"])
+    packs = tools._packs()
+    return dict(decision=asdict(d), outcome=decision_outcomes(tools.STORE.all(), packs).get(d.id, ""),
+                approval=packs[vid]["approval"] if vid in packs else None)
 
 
 SESSIONS, LIMITER = Sessions(), RateLimiter()

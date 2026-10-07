@@ -1,10 +1,13 @@
 """Engineer decisions: the only way a human changes what the engines conclude.
 
-Three kinds, all append-only and attributed:
-  part_review  accept the grading engine's verdict on a part, or override it to another verdict
+Four kinds, all append-only and attributed:
+  part_review  accept the grading engine's verdict on a flagged part, override it to another
+               verdict, or request further inspection (the part stays on hold)
   harvest      exclude or require a component in the plan (or clear an earlier instruction)
   sign_off     sign a vehicle off; only allowed when nothing is open, and it goes stale if
                anything about the vehicle is decided after it
+  rule_review  approve or reject a grading rule Gemini read from a drawing. Only an approved
+               rule that passed the fixed gates can grade parts; otherwise the baseline rule does.
 
 Every decision needs a named engineer, and every judgment a reason (compliance C08: overrides
 logged with a reason). The log is never edited: the latest decision per target wins and the
@@ -31,11 +34,21 @@ from app.engines.grading import FAIL_VERDICTS
 
 ROOT = Path(__file__).resolve().parents[2]
 VERDICTS = {"reuse"} | FAIL_VERDICTS
-KINDS = {"part_review", "harvest", "sign_off"}
+KINDS = {"part_review", "harvest", "sign_off", "rule_review"}
 ACTIONS = {
-    "part_review": {"accept"} | {f"override:{v}" for v in VERDICTS},
+    "part_review": {"accept", "request_review"} | {f"override:{v}" for v in VERDICTS},
     "harvest": {"exclude", "require", "clear"},
     "sign_off": {"sign"},
+    "rule_review": {"approve", "reject"},
+}
+
+# What happens to a part once its verdict is final. Fixed: derived from the verdict, never by an LLM.
+NEXT_ACTION = {
+    "reuse": "Harvest for reuse",
+    "replace": "Replace with a new or Grade-A part",
+    "refurbish": "Refurbish before reuse",
+    "scrap": "Send to the scrap stream",
+    "needs_inspection": "Further inspection",
 }
 
 
@@ -50,7 +63,7 @@ class Decision:
     vehicle_id: str
     action: str
     reason: str = ""
-    target: str = ""                 # part_no for part_review, component for harvest, "" for sign_off
+    target: str = ""                 # part_no (part_review, rule_review), component (harvest), "" (sign_off)
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
     at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
     context: dict = field(default_factory=dict)   # what the engine said at the time, for the audit trail
@@ -154,16 +167,21 @@ def validate_shape(d: Decision) -> None:
         raise DecisionError("A sign-off is for the whole vehicle; it takes no target.")
     if d.kind != "sign_off" and not d.target:
         raise DecisionError(f"A {d.kind} decision needs a target.")
+    if d.kind == "rule_review" and d.vehicle_id:
+        raise DecisionError("A drawing-rule decision is for a part number, not a vehicle.")
+    if d.kind != "rule_review" and not d.vehicle_id:
+        raise DecisionError(f"A {d.kind} decision needs a vehicle.")
 
 
 # ---- applying decisions to engine outputs --------------------------------------------------
 
 def apply_part_reviews(grades: pd.DataFrame, decisions: list[Decision]) -> pd.DataFrame:
     """Final verdict per part: the engine's, unless an engineer overrode it. A decided part is no
-    longer waiting for review. The engine's own verdict is kept beside it."""
+    longer waiting for review; a part sent for further inspection stays open. The engine's own
+    verdict is kept beside it, and every part gets its status and next action."""
     g = grades.copy()
     g["engine_verdict"] = g.verdict
-    g["decision"], g["decided_by"], g["decision_reason"] = "", "", ""
+    g["decision"], g["decided_by"], g["decision_reason"], g["decided_at"] = "", "", "", ""
     for (kind, vid, part), d in latest(decisions).items():
         if kind != "part_review":
             continue
@@ -173,8 +191,28 @@ def apply_part_reviews(grades: pd.DataFrame, decisions: list[Decision]) -> pd.Da
         g.loc[m, "decision"] = d.action
         g.loc[m, "decided_by"] = d.engineer
         g.loc[m, "decision_reason"] = d.reason
-        g.loc[m, "needs_review"] = False
+        g.loc[m, "decided_at"] = d.at
+        g.loc[m, "needs_review"] = d.action == "request_review"
+    outcome = [part_outcome(r) for r in g.to_dict("records")]
+    g["status"] = [o[0] for o in outcome]
+    g["next_action"] = [o[1] for o in outcome]
     return g
+
+
+def part_outcome(r: dict) -> tuple[str, str]:
+    """(status, next action) for one graded part. Nothing moves while an engineer's call is
+    pending: a flagged or unruled part is on hold until it is decided."""
+    d, who = r.get("decision") or "", r.get("decided_by") or ""
+    if d == "request_review":
+        return f"Inspection requested by {who}", "Hold: further inspection"
+    if r.get("needs_review"):
+        return "Awaiting engineer", "Hold: awaiting engineer decision"
+    nxt = NEXT_ACTION.get(r["verdict"], "Hold")
+    if d == "accept":
+        return f"Approved by {who}", nxt
+    if d.startswith("override:"):
+        return f"Overridden by {who} (engine said {r.get('engine_verdict')})", nxt
+    return "Engine verdict (no review needed)", nxt
 
 
 def harvest_instructions(decisions: list[Decision]) -> tuple[set[tuple[str, str]], set[tuple[str, str]]]:
@@ -188,11 +226,13 @@ def harvest_instructions(decisions: list[Decision]) -> tuple[set[tuple[str, str]
     return exclude, require
 
 
-def sign_off_for(vehicle_id: str, decisions: list[Decision]) -> Decision | None:
-    """The vehicle's sign-off if it is still current: nothing about the vehicle decided after it."""
+def sign_off_for(vehicle_id: str, decisions: list[Decision], parts: set[str] = frozenset()) -> Decision | None:
+    """The vehicle's sign-off if it is still current: nothing about the vehicle decided after it,
+    including a drawing-rule decision for a part graded on this vehicle (`parts`)."""
     signed = None
     for d in decisions:
-        if d.vehicle_id != vehicle_id:
-            continue
-        signed = d if d.kind == "sign_off" else None
+        if d.vehicle_id == vehicle_id:
+            signed = d if d.kind == "sign_off" else None
+        elif d.kind == "rule_review" and d.target in parts:
+            signed = None
     return signed

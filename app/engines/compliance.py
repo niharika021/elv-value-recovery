@@ -6,7 +6,9 @@ before anything is pulled; every other rule holds the vehicle's release.
 Vehicle status: red if a red rule fails, amber if an amber rule fails, otherwise green.
 
 Evidence is not taken on trust where the engines can check it: grading evidence fails when
-the grading engine finds a harvested part without its photo, whatever the evidence file says.
+the grading engine finds a harvested part without its photo, whatever the evidence file says;
+C08 (overrides logged with a reason) is judged on the decision log itself, not the file's Y/N.
+There are no engineer waivers: a compliance gap closes only when the evidence is on file.
 
 The rule pack is a simplified demo summary, not legal text (see compliance_rules.csv sources).
 """
@@ -87,8 +89,23 @@ def _present(v) -> bool:
     return isinstance(v, str) and v.strip() not in ("", "N")
 
 
+OVERRIDE_ACTIONS = ("override:", "exclude", "require")
+
+
+def _overrides_logged(overrides: list, file_value) -> tuple[str, str]:
+    """C08 from the decision log: every engineer override needs a named engineer and a reason."""
+    bad = [d for d in overrides if not d.engineer.strip() or not d.reason.strip()]
+    note = "" if not isinstance(file_value, str) or file_value.strip() in ("", "Y") else         f"; the evidence file says {file_value!r}, but the decision log is the record"
+    if bad:
+        return "fail", f"{len(bad)} override(s) in the decision log without an engineer or reason{note}"
+    if not overrides:
+        return "pass", f"no engineer overrides recorded for this vehicle{note}"
+    return "pass", f"{len(overrides)} engineer override(s) in the decision log, each with engineer and reason{note}"
+
+
 def check_vehicle(vehicle_id: str, evidence: dict, harvest: tuple[str, ...] | None,
-                  converter_present: bool, photos_missing: dict[str, int], rules: pd.DataFrame) -> VehicleCompliance:
+                  converter_present: bool, photos_missing: dict[str, int], rules: pd.DataFrame,
+                  overrides: list | None = None) -> VehicleCompliance:
     """harvest=None means not yet planned: harvest-dependent rules are reported as pending (n/a)."""
     out = []
     for r in rules.itertuples(index=False):
@@ -98,7 +115,9 @@ def check_vehicle(vehicle_id: str, evidence: dict, harvest: tuple[str, ...] | No
         def res(status, detail):
             out.append(RuleResult(r.rule_id, r.severity, stage, status, detail, r.check, r.source))
 
-        if f == "pgm_recycler_id" and not converter_present:
+        if f == "overrides_logged":
+            res(*_overrides_logged(overrides or [], v))
+        elif f == "pgm_recycler_id" and not converter_present:
             res("n/a", "no catalytic converter on the vehicle at intake")
         elif f in ABOUT_HARVEST and harvest is None:
             res("n/a", "pending: harvest not planned yet")
@@ -115,8 +134,9 @@ def check_vehicle(vehicle_id: str, evidence: dict, harvest: tuple[str, ...] | No
 
 
 def check_month(harvests: dict[str, tuple[str, ...]] | None = None, grades: pd.DataFrame | None = None,
-                rules: pd.DataFrame | None = None) -> dict[str, VehicleCompliance]:
-    """Check every vehicle. harvests=None checks dismantle-stage rules only (before planning)."""
+                rules: pd.DataFrame | None = None, decisions: list | None = None) -> dict[str, VehicleCompliance]:
+    """Check every vehicle. harvests=None checks dismantle-stage rules only (before planning).
+    decisions: the engineer decision log, for C08."""
     rules = load_rule_pack(rules)
     ev = pd.read_csv(DATA / "compliance_evidence.csv", dtype=str).fillna("").set_index("vehicle_id")
     comp = pd.read_csv(DATA / "components.csv")
@@ -135,9 +155,10 @@ def check_month(harvests: dict[str, tuple[str, ...]] | None = None, grades: pd.D
         harvest = None if harvests is None else tuple(harvests[vid])
         units = [UNIT_OF[c] for c in (harvest or ()) if c in UNIT_OF]
         photos = {u: int(no_photo[(vid, u)]) for u in units if (vid, u) in no_photo.index}
+        overrides = [d for d in (decisions or []) if d.vehicle_id == vid and d.action.startswith(OVERRIDE_ACTIONS)]
         out[vid] = check_vehicle(vid, ev.loc[vid].to_dict(), harvest,
                                  converter_present=bool(len(cat)) and cat.condition_grade.iloc[0] != "missing",
-                                 photos_missing=photos, rules=rules)
+                                 photos_missing=photos, rules=rules, overrides=overrides)
     return out
 
 

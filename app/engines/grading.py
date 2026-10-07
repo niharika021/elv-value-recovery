@@ -36,6 +36,7 @@ NOTE_SUGGESTS_WEAR = "note_suggests_wear"          # measurement passes, note de
 BORDERLINE = "borderline"                          # passes, but close to the limit
 NO_PHOTO = "photo_missing"                         # grading evidence incomplete (compliance C06)
 NO_READING = "no_reading"                          # measurement missing or unreadable
+NO_RULE = "no_approved_rule"                      # no approved limit for this part: review, never a pass
 
 
 class RuleError(ValueError):
@@ -188,16 +189,23 @@ def grade_part(rule: GradingRule, measured_value, *, vehicle_id: str = "", unit_
 
 def grade_inspections(inspections: pd.DataFrame | None = None, rules: dict[str, GradingRule] | None = None,
                       borderline: float = BORDERLINE_MARGIN) -> pd.DataFrame:
-    """Grade every inspection row. A part with no rule is an error, not a pass."""
+    """Grade every inspection row. A part with no approved rule gets 'needs_inspection' and goes to
+    an engineer: never a pass, and never a limit made up to fill the gap."""
     ins = pd.read_csv(DATA / "inspections.csv", dtype={"measured_value": str}) if inspections is None else inspections
     rules = load_rules() if rules is None else rules
-    missing = sorted(set(ins.part_no) - set(rules))
-    if missing:
-        raise RuleError(f"No grading rule for {missing}")
 
     rows = []
     for r in ins.itertuples(index=False):
-        rule = rules[r.part_no]
+        rule = rules.get(r.part_no)
+        if rule is None:
+            photo_ok = isinstance(r.photo_uri, str) and r.photo_uri.strip()
+            raw = "" if r.measured_value is None or (isinstance(r.measured_value, float) and math.isnan(r.measured_value))                 else str(r.measured_value)
+            rows.append(dict(vehicle_id=r.vehicle_id, unit_type=r.unit_type, part_no=r.part_no, measure=r.measure,
+                             measured_value=raw, limit="", drawing_no="", result="no_rule", verdict="needs_inspection",
+                             margin=None, flags=",".join([NO_RULE] + ([] if photo_ok else [NO_PHOTO])),
+                             reason=f"No approved grading rule for {r.part_no}; review required.",
+                             needs_review=True, inspector_note=r.inspector_note, inspector=r.inspector))
+            continue
         if r.measure != rule.measure:
             raise RuleError(f"{r.vehicle_id} {r.part_no}: inspected {r.measure!r}, drawing limits {rule.measure!r}")
         g = grade_part(rule, r.measured_value, vehicle_id=r.vehicle_id, unit_type=r.unit_type,

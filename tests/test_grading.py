@@ -114,8 +114,16 @@ def test_malformed_rules_are_rejected(over):
         load_rules(rules_df(**over), BOM)
 
 
-def test_inspection_without_a_rule_is_an_error():
+def test_inspection_without_an_approved_rule_needs_review_and_never_passes():
     ins = pd.DataFrame([dict(vehicle_id="V99", unit_type="starter", part_no="XXX-01", measure="m",
+                             measured_value="1", inspector_note="looks ok", photo_uri=PHOTO, inspector="I")])
+    g = grade_inspections(ins).iloc[0]
+    assert (g.result, g.verdict, g.needs_review) == ("no_rule", "needs_inspection", True)
+    assert "no_approved_rule" in g["flags"] and "review required" in g.reason
+
+
+def test_inspection_measuring_the_wrong_thing_is_still_an_error():
+    ins = pd.DataFrame([dict(vehicle_id="V99", unit_type="starter", part_no="STR-03", measure="colour",
                              measured_value="1", inspector_note="", photo_uri=PHOTO, inspector="I")])
     with pytest.raises(RuleError):
         grade_inspections(ins)

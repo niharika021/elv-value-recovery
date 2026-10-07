@@ -31,15 +31,18 @@ async function getJSON(url) {
 // ---- summary --------------------------------------------------------------------------
 function renderSummary(m, vehicles) {
   $("hero-value").textContent = `${m.gap_closed_pct}%`;
-  $("hero-note").innerHTML = `Average gap ${inr(m.average_gap_scrap_only_inr)} with scrap only, ${inr(m.average_gap_inr)} with harvesting`;
-  const review = vehicles.reduce((a, v) => a + v.open_items, 0);
+  $("hero-note").innerHTML = `The informal scrapper outbids us by ${inr(m.average_gap_scrap_only_inr)} per vehicle on scrap value alone;
+    harvesting cuts that to ${inr(m.average_gap_inr)}.`;
   const tiles = [
-    ["Average gap, scrap only", inr(m.average_gap_scrap_only_inr), "informal offer minus RVSF offer"],
-    ["Average gap, with harvesting", inr(m.average_gap_inr), "after parts are pulled and sold"],
+    ["Average offer, scrap only", inr(m.average_offer_scrap_only_inr), "metal, battery, converter, EPR"],
+    ["Average offer, with harvesting", inr(m.average_offer_inr), "after the planned parts are sold"],
+    ["Harvest gain this month", inr(m.harvest_gain_inr), "net of labour and scrap value lost"],
     ["Blocked before dismantling", m.blocked_before_dismantling.join(", ") || "None", "a dismantle-stage compliance rule fails"],
     ["Steel to recyclers", `${num(m.steel_to_recycler_kg)} kg`, "weighbridge basis for EPR"],
     ["CO₂ avoided by reuse", `${num(m.co2_avoided_kg)} kg`, "harvested parts reused, not made new"],
-    ["Open items", num(review), "for engineer review or evidence"],
+    ["Average gap, scrap only", inr(m.average_gap_scrap_only_inr), "informal offer minus RVSF offer"],
+    ["Average gap, with harvesting", inr(m.average_gap_inr), "what the informal scrapper still pays more"],
+    ["Open items", num(m.open_items), "engineer reviews and evidence gaps"],
   ];
   $("tiles").innerHTML = tiles.map(([l, v, n]) =>
     `<div class="tile"><div class="label">${esc(l)}</div><div class="value">${esc(v)}</div><div class="note">${esc(n)}</div></div>`).join("");
@@ -127,6 +130,7 @@ function renderCards(vehicles) {
       <div class="facts"><span>Gap left <b>${inr(v.gap_inr)}</b></span><span>Parts <b>${num(v.parts_harvested)}</b></span>
         <span>Open items <b>${num(v.open_items)}</b></span></div>
       <div>${approvalPill(v.approval)}</div>
+      <div class="next">Next: <b>${esc(v.next_action)}</b></div>
     </button>`).join("");
   $("cards").querySelectorAll(".card").forEach((c) => c.addEventListener("click", () => openVehicle(c.dataset.vid)));
 }
@@ -180,21 +184,25 @@ function renderDetail(p) {
     </tbody></table></div>`;
 
   const grading = p.grading.length ? `<div class="table-wrap"><table><thead><tr><th>Part</th><th>Measured</th><th>Limit</th>
-    <th>Drawing</th><th>Verdict</th><th>Flags</th><th>Inspector note</th></tr></thead><tbody>
+    <th>Drawing</th><th>Verdict</th><th>Status</th><th>Next action</th><th>Flags</th><th>Inspector note</th></tr></thead><tbody>
     ${p.grading.map((g) => `<tr class="${g.needs_review ? "review" : ""}"><td>${esc(g.part_no)}</td><td class="num">${esc(g.measured_value)}</td>
-      <td>${esc(g.limit)}</td><td>${esc(g.drawing_no)}</td><td>${g.needs_review ? "<b>" + esc(g.verdict) + "</b> · review" : esc(g.verdict)}</td>
+      <td title="${esc(g.rule_source)}">${esc(g.limit)}${String(g.rule_source || "").startsWith("Gemini") ? " <span class=\"flag\">Gemini, approved</span>" : ""}</td>
+      <td>${esc(g.drawing_no)}</td><td><b>${esc(g.verdict)}</b></td><td>${esc(g.status)}</td><td>${esc(g.next_action)}</td>
       <td>${(g.flags || "").split(",").filter(Boolean).map((f) => `<span class="flag">${label(f)}</span>`).join("")}</td>
-      <td>${esc(g.inspector_note)}</td></tr>`).join("")}</tbody></table></div>`
+      <td>${esc(g.inspector_note)}</td></tr>`).join("")}</tbody></table></div>
+      <p class="caveat">Limits are demonstration rules, not production or legal requirements. Hover a limit to see which rule graded the part.</p>`
     : `<p class="muted">No starter or alternator harvested from this vehicle.</p>`;
 
   const rules = `<div class="table-wrap"><table><thead><tr><th>Rule</th><th>Result</th><th>Blocks</th><th>Detail</th><th>Source</th></tr></thead><tbody>
     ${c.rules.map((r) => `<tr><td>${esc(r.rule_id)} · ${esc(r.check)}</td>
       <td>${r.status === "fail" ? pill(r.severity === "red" ? "red" : "amber", "Fail") : r.status === "pass" ? pill("green", "Pass") : pill("neutral", "n/a")}</td>
-      <td>${esc(r.stage)}</td><td>${esc(r.detail)}</td><td class="muted">${esc(r.source)}</td></tr>`).join("")}</tbody></table></div>`;
+      <td>${esc(r.stage)}</td><td>${esc(r.detail)}</td><td class="muted">${esc(r.source)}</td></tr>`).join("")}</tbody></table></div>
+    <p class="caveat">Demo rule pack: simplified summaries with their source names, not legal advice. Gaps close only with evidence.</p>`;
 
   $("detail-body").innerHTML = `
     <div>${pill(c.status)} ${approvalPill(p.approval.status)}
       <span class="muted">· ${c.can_dismantle ? "may be dismantled" : "may not be dismantled"} · ${c.can_release ? "may be released" : "release on hold"}</span></div>
+    <div class="next">Next action: <b>${esc(p.approval.next_action)}</b></div>
     <section class="detail-grid"><div><h2>How the offer is built</h2>${waterfall}</div><div><h2>Against the informal offer</h2>${compare}</div></section>
     <section><h2>Open items</h2>${open}</section>
     <section><h2>Components</h2>${comps}</section>
@@ -231,7 +239,7 @@ function decisionsTable(ds) {
 
 function approvalBlock(p) {
   const a = p.approval;
-  if (a.status === "signed") return `<b>Signed off</b> by ${esc(a.engineer)} at ${when(a.signed_at)} UTC.`;
+  if (a.status === "signed") return `<b>Signed off</b> by ${esc(a.engineer)} at ${when(a.signed_at)} UTC. Next: <b>${esc(a.next_action)}</b>.`;
   if (a.status === "ready") return `<div class="decide-row"><span><b>Nothing open.</b> Ready for an engineer to sign off.</span>
     <button class="primary" type="button" id="sign-go">Sign off ${esc(p.vehicle_id)}</button></div><div class="msg" id="sign-msg" role="status" aria-live="polite"></div>`;
   return `<b>Engineer sign-off:</b> pending until the open items are resolved. Agents and this screen explain; only an engineer decides.`;
@@ -265,14 +273,14 @@ async function decide(body, msgEl) {
   const data = await r.json().catch(() => ({}));
   if (!r.ok) { say(msgEl, data.detail || `Not recorded (${r.status}).`, false); return false; }
   const d = data.decision;
-  const what = d.kind === "sign_off" ? `${d.vehicle_id} signed off` : `${d.vehicle_id} ${d.target}: ${d.action.replace(":", " to ")}`;
-  lastNote = { id: msgEl && msgEl.id, text: `Recorded: ${what}, by ${d.engineer}.` };
+  const what = d.kind === "sign_off" ? `${d.vehicle_id} signed off` : `${d.vehicle_id || ""} ${d.target}: ${d.action.replace(":", " to ").replace("_", " ")}`.trim();
+  lastNote = { id: msgEl && msgEl.id, text: `Recorded: ${what}, by ${d.engineer}. Result: ${data.outcome || "recorded"}.` };
   await loadAll();
   return true;
 }
 
-const ACTION_TEXT = { accept: "Accept the engine's verdict", "override:reuse": "Override: reuse", "override:replace": "Override: replace",
-  "override:refurbish": "Override: refurbish", "override:scrap": "Override: scrap" };
+const ACTION_TEXT = { accept: "Approve the engine's verdict", request_review: "Request further inspection", "override:reuse": "Override: reuse",
+  "override:replace": "Override: replace", "override:refurbish": "Override: refurbish", "override:scrap": "Override: scrap" };
 
 function renderInbox(ib) {
   const reviews = ib.reviews.length ? ib.reviews.map((r, i) => `
@@ -280,6 +288,7 @@ function renderInbox(ib) {
       <div class="what"><b>${esc(r.vehicle_id)} · ${esc(r.part_no)}</b> · engine verdict <b>${esc(r.verdict)}</b>
         ${(r.flags || "").split(",").filter(Boolean).map((f) => `<span class="flag">${label(f)}</span>`).join("")}</div>
       <div class="why">${esc(r.reason)} Inspector note: "${esc(r.inspector_note)}"</div>
+      <div class="next">Status: <b>${esc(r.status)}</b> · if approved, next: <b>${esc(r.next_if_accepted)}</b></div>
       <div class="decide-row">
         <select id="rv-act-${i}" aria-label="Decision for ${esc(r.vehicle_id)} ${esc(r.part_no)}">
           ${Object.entries(ACTION_TEXT).filter(([a]) => a !== "override:" + r.verdict).map(([a, t]) => `<option value="${a}">${esc(t)}</option>`).join("")}</select>
@@ -292,9 +301,9 @@ function renderInbox(ib) {
       <button class="primary" type="button" data-sign="${esc(v.vehicle_id)}">Sign off</button></div>`).join("")
     : `<p class="muted">No vehicle is ready: each still has open items.</p>`;
   const signed = ib.signed.map((v) => `<div class="sign-item"><span><b>${esc(v.vehicle_id)}</b> signed by ${esc(v.engineer)}</span><span class="muted">${when(v.signed_at)}</span></div>`).join("");
-  const recent = ib.recent.length ? `<div class="table-wrap"><table><thead><tr><th>When (UTC)</th><th>Engineer</th><th>Decision</th><th>Reason</th></tr></thead><tbody>
+  const recent = ib.recent.length ? `<div class="table-wrap"><table><thead><tr><th>When (UTC)</th><th>Engineer</th><th>Decision</th><th>Reason</th><th>Result now</th></tr></thead><tbody>
     ${ib.recent.map((d) => `<tr><td class="num">${when(d.at)}</td><td>${esc(d.engineer)}</td>
-      <td>${esc(d.vehicle_id)} ${esc(d.target)} · ${esc(d.action)}</td><td>${esc(d.reason)}</td></tr>`).join("")}</tbody></table></div>`
+      <td>${esc(d.vehicle_id)} ${esc(d.target)} · ${esc(d.action)}</td><td>${esc(d.reason)}</td><td class="outcome">${esc(d.outcome)}</td></tr>`).join("")}</tbody></table></div>`
     : `<p class="muted">No decisions recorded yet.</p>`;
 
   $("inbox").innerHTML = `<div class="inbox-grid">
@@ -310,6 +319,29 @@ function renderInbox(ib) {
   }));
   $("inbox").querySelectorAll("button[data-sign]").forEach((b) => b.addEventListener("click", () =>
     decide({ kind: "sign_off", vehicle_id: b.dataset.sign, action: "sign" }, $("inbox-msg"))));
+}
+
+// ---- drawing rules: Gemini's readings, approved or rejected by an engineer ------------------------
+function renderRules(rl) {
+  $("rules-count").textContent = `· ${rl.pending} awaiting approval`;
+  const STATE = { "pending approval": "neutral", approved: "green", rejected: "red", "failed the fixed checks": "amber", "no Gemini reading": "neutral" };
+  $("rules").innerHTML = `<div class="table-wrap"><table><thead><tr><th>Part</th><th>Gemini read</th><th>Baseline</th>
+    <th>Fixed checks</th><th>Status</th><th>Grades with</th><th>Decide</th></tr></thead><tbody>
+    ${rl.rules.map((r, i) => `<tr class="rule-row"><td><b>${esc(r.part_no)}</b><br><span class="muted">${esc(r.drawing_no)}</span></td>
+      <td>${esc(r.gemini || "–")} · ${esc(r.gemini_action || "")}<div class="rule-quote">"${esc(r.evidence || "")}"</div></td>
+      <td>${esc(r.baseline)} · ${esc(r.baseline_action)}</td>
+      <td>${r.gates === "checked" ? pill("green", "Passed") : pill("amber", "Failed")}${r.gate_problems ? `<div class="rule-quote">${esc(r.gate_problems)}</div>` : ""}</td>
+      <td>${pill(STATE[r.state] || "neutral", r.state)}${r.decision ? `<div class="rule-quote">${esc(r.decision.engineer)}: ${esc(r.decision.reason)}</div>` : ""}</td>
+      <td class="rule-quote">${esc(r.active_source)}</td>
+      <td><div class="decide-row"><input id="rl-why-${i}" type="text" placeholder="Reason (required)" maxlength="500" aria-label="Reason for ${esc(r.part_no)}">
+        <button class="primary" type="button" data-rule="${i}" data-act="approve" ${r.gates === "checked" && r.state !== "approved" ? "" : "disabled"}>Approve</button>
+        <button class="ghost" type="button" data-rule="${i}" data-act="reject" ${r.gemini && r.state !== "rejected" ? "" : "disabled"}>Reject</button></div></td>
+    </tr>`).join("")}</tbody></table></div>`;
+  $("rules").querySelectorAll("button[data-rule]").forEach((b) => b.addEventListener("click", () => {
+    const r = rl.rules[+b.dataset.rule];
+    decide({ kind: "rule_review", vehicle_id: "", target: r.part_no, action: b.dataset.act,
+      reason: $(`rl-why-${b.dataset.rule}`).value }, $("rules-msg"));
+  }));
 }
 
 // ---- chat ------------------------------------------------------------------------------------
@@ -396,7 +428,8 @@ $("chat-new").addEventListener("click", () => {
 let current = null, openVid = null;
 
 async function loadAll() {
-  const [data, ib] = await Promise.all([getJSON("/api/month"), getJSON("/api/inbox")]);
+  const [data, ib, rl] = await Promise.all([getJSON("/api/month"), getJSON("/api/inbox"), getJSON("/api/rules")]);
+  renderRules(rl);
   current = data;
   renderSummary(data.month, data.vehicles);
   renderChart(data.vehicles);
