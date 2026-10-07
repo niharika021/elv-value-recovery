@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 from app.elv_agent import tools
 from app.engines.audit import record_decision
 from app.engines.decisions import Decision, DecisionError
+from app.web.chat import ChatLimit, ChatTimeout, RateLimiter, Sessions, answer
 
 STATIC = Path(__file__).resolve().parent / "static"
 
@@ -96,6 +97,29 @@ def decide(body: DecisionIn) -> dict:
     except DecisionError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     return dict(decision=asdict(d), approval=tools._packs()[vid]["approval"])
+
+
+SESSIONS, LIMITER = Sessions(), RateLimiter()
+
+
+class ChatIn(BaseModel):
+    question: str = Field(..., max_length=2000)
+    session_id: str | None = None
+
+
+@app.post("/api/chat")
+async def chat(body: ChatIn, request: Request) -> dict:
+    """Ask the agents. They read engine outputs and the decision log; they cannot change anything."""
+    # Last X-Forwarded-For entry: the one our proxy (Cloud Run) appended; earlier entries are client-supplied.
+    client = request.headers.get("x-forwarded-for", "").split(",")[-1].strip() or (request.client.host if request.client else "?")
+    try:
+        return await answer(SESSIONS, LIMITER, client, body.question, body.session_id)
+    except ChatLimit as e:
+        raise HTTPException(status_code=429, detail=str(e)) from e
+    except ChatTimeout as e:
+        raise HTTPException(status_code=504, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @app.get("/")

@@ -12,7 +12,7 @@ This app helps an RVSF earn more from every vehicle:
 
 Design rule: **agents read and explain; fixed engines own every number; an engineer approves every decision.**
 
-> Status: Day 10 (engines, Gemini drawing reader, compliance, audit pack, ADK agents, web dashboard, approval inbox). Chat and deployment follow; see the timeline in the project plan.
+> Status: Day 11 (engines, Gemini drawing reader, compliance, audit pack, ADK agents, web app with approval inbox and chat; container ready, not yet deployed); see the timeline in the project plan.
 
 ---
 
@@ -149,6 +149,27 @@ The only way a human changes an outcome. An engineer can **accept or override** 
 Rules: every decision names the engineer and gives a reason (compliance C08); an override must differ from the engine's verdict; impossible plan instructions are refused; sign-off needs nothing open and goes stale if anything about the vehicle is decided afterwards; compliance gaps cannot be decided away, only closed with evidence.
 The log is append-only and each entry keeps what the engine said at that moment. Stored as JSON lines in `out/decisions.jsonl` locally (`ELV_DECISIONS` to move it); Firestore on Cloud Run. Identity is self-declared in the demo; sign-in (IAP) is the production answer.
 The agents read the log (`decision_log`) and report who decided what and why; they still cannot decide.
+
+### Chat in the app (`POST /api/chat`)
+
+Ask the agents from the web page. Each answer shows the agents and tools used and the grounding check (green when every number traced to a tool result, red with the numbers that did not). One conversation per browser tab; a per-visitor limit (`CHAT_LIMIT_PER_HOUR`, default 30) keeps Gemini costs bounded once the app is public.
+Every Gemini request times out after 60 s (`GEMINI_TIMEOUT_MS`) and a whole question after 120 s (`CHAT_TIMEOUT_S`): during testing a request occasionally never returned, and without these the chat hung indefinitely.
+
+### Deploying to Cloud Run (prepared, not yet run)
+
+The `Dockerfile` builds one container (API, front end, agents); `requirements.txt` resolves cleanly from scratch, and the container's start command was run against an image-shaped copy with environment-only configuration. The image itself has not been built (no Docker on the dev machine; Cloud Build will build it). Steps, once access is decided:
+
+```bash
+P=elv-value-recovery-2026
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com firestore.googleapis.com --project $P
+gcloud firestore databases create --location=asia-south1 --project $P
+gcloud iam service-accounts create elv-app --project $P
+gcloud projects add-iam-policy-binding $P --member serviceAccount:elv-app@$P.iam.gserviceaccount.com --role roles/aiplatform.user
+gcloud projects add-iam-policy-binding $P --member serviceAccount:elv-app@$P.iam.gserviceaccount.com --role roles/datastore.user
+gcloud run deploy elv-value-recovery --source . --region asia-south1 --project $P   --service-account elv-app@$P.iam.gserviceaccount.com --max-instances 2   --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$P,GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=gemini-3.8-flash,ELV_STORE=firestore   --no-allow-unauthenticated   # or --allow-unauthenticated for a public demo
+```
+
+`ELV_STORE=firestore` moves the decision log to Firestore (one document per decision, created never updated). Access is still to be decided: public with guardrails, or named Google accounts through IAP (which would also give the inbox a verified engineer identity).
 
 ### Economics check (`scripts/check_values.py`)
 

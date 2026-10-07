@@ -9,7 +9,7 @@ import pandas as pd
 
 from app.engines.audit import _clean, build_month
 from app.engines.compliance import dismantle_blocked
-from app.engines.decisions import JsonlStore
+from app.engines.decisions import make_store
 from app.engines.grading import DATA
 from app.engines.planner import plan_harvest
 from app.engines.value import month_table, value_month
@@ -17,7 +17,7 @@ from app.engines.value import month_table, value_month
 VEHICLES = [f"V{i:02d}" for i in range(1, 13)]
 
 
-STORE = JsonlStore()   # engineer decisions; Firestore on Cloud Run
+STORE = make_store()   # engineer decisions: JSON-lines file locally, Firestore on Cloud Run
 _cache: dict = {}
 
 

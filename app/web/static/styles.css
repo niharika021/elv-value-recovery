@@ -170,3 +170,23 @@ button.primary:disabled { opacity: .5; cursor: not-allowed; }
 .msg.err { color: var(--critical-ink); margin-bottom: 8px; }
 .decide { border-top: 1px solid var(--grid); padding-top: 12px; }
 @media (max-width: 760px) { .inbox-grid { grid-template-columns: 1fr; } .panel-head { flex-wrap: wrap; } }
+
+/* ---- chat ---- */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip { font: inherit; font-size: 12px; color: var(--ink); background: var(--surface-2); border: 1px solid var(--ring); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.chip:hover { border-color: var(--axis); }
+.chat-log { display: grid; gap: 12px; max-height: 560px; overflow-y: auto; margin-bottom: 10px; }
+.chat-log:empty { display: none; }
+.msg-q { justify-self: end; max-width: 85%; background: var(--surface-2); border-radius: 12px 12px 2px 12px; padding: 8px 12px; font-size: 14px; }
+.msg-a { max-width: 100%; border: 1px solid var(--grid); border-radius: 12px 12px 12px 2px; padding: 10px 14px; font-size: 14px; overflow-wrap: anywhere; }
+.msg-a h4 { margin: 10px 0 4px; font-size: 14px; }
+.msg-a p { margin: 6px 0; }
+.msg-a ul, .msg-a ol { margin: 4px 0; padding-left: 20px; }
+.msg-a code { font-size: 12px; background: var(--surface-2); padding: 1px 4px; border-radius: 4px; }
+.msg-a hr { border: 0; border-top: 1px solid var(--grid); margin: 8px 0; }
+.msg-meta { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--grid); font-size: 12px; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.grounded { color: var(--good-ink); font-weight: 600; }
+.ungrounded { color: var(--critical-ink); font-weight: 600; }
+.thinking { color: var(--ink-2); font-size: 13px; }
+.chat-form { display: flex; gap: 8px; }
+.chat-form input { flex: 1 1 auto; }

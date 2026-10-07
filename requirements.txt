@@ -13,7 +13,7 @@ google-adk>=2.0
 # Day 9: web app
 fastapi>=0.110
 uvicorn>=0.30
-# Coming next (cloud)
-# google-cloud-bigquery
-# google-cloud-storage
-# google-cloud-firestore
+# Day 11: decision log on Cloud Run
+google-cloud-firestore>=2.16
+# google-adk 2.11 caps opentelemetry at 1.42.1; google-api-core 2.41+ needs 1.44+. Keep them compatible.
+google-api-core<2.41

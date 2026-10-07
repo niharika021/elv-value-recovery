@@ -8,7 +8,8 @@ Three kinds, all append-only and attributed:
 
 Every decision needs a named engineer, and every judgment a reason (compliance C08: overrides
 logged with a reason). The log is never edited: the latest decision per target wins and the
-history stays. Storage sits behind DecisionStore; a JSON-lines file here, Firestore on Cloud Run.
+history stays. Storage sits behind DecisionStore: a JSON-lines file locally, Firestore on Cloud
+Run (make_store picks by ELV_STORE).
 
 Identity is self-declared in this demo; on Cloud Run it should come from the sign-in (IAP).
 """
@@ -17,6 +18,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+import time
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -98,6 +100,37 @@ class MemoryStore:
 
     def version(self) -> str:
         return str(len(self._d))
+
+
+class FirestoreStore:
+    """Firestore collection, one document per decision (id = decision id), ordered by a nanosecond
+    sequence so decisions in the same second keep their order. Documents are only ever created,
+    never updated: create() fails if the id exists, which keeps the log append-only."""
+
+    def __init__(self, collection: str | None = None, client=None):
+        if client is None:
+            from google.cloud import firestore
+            client = firestore.Client(project=os.environ.get("GOOGLE_CLOUD_PROJECT"))
+        self.col = client.collection(collection or os.environ.get("ELV_DECISIONS_COLLECTION", "decisions"))
+        self._seq = 0
+
+    def append(self, d: Decision) -> None:
+        self._seq = max(time.time_ns(), self._seq + 1)
+        self.col.document(d.id).create({**asdict(d), "seq": self._seq})
+
+    def all(self) -> list[Decision]:
+        docs = [doc.to_dict() for doc in self.col.order_by("seq").stream()]
+        return [Decision(**{k: v for k, v in d.items() if k != "seq"}) for d in docs]
+
+    def version(self) -> str:
+        last = list(self.col.order_by("seq", direction="DESCENDING").limit(1).stream())
+        return f"{last[0].to_dict()['seq']}" if last else "0"
+
+
+def make_store() -> DecisionStore:
+    """ELV_STORE=firestore on Cloud Run (the container's disk does not survive restarts);
+    a JSON-lines file otherwise."""
+    return FirestoreStore() if os.environ.get("ELV_STORE", "").lower() == "firestore" else JsonlStore()
 
 
 def latest(decisions: list[Decision]) -> dict[tuple[str, str, str], Decision]:

@@ -1,0 +1,10 @@
+.venv/
+.git/
+.claude/
+.env
+out/
+tests/
+**/__pycache__/
+.pytest_cache/
+*.zip
+*.log

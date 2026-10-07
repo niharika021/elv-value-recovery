@@ -38,6 +38,23 @@
       <div id="inbox"></div>
     </section>
 
+    <section class="panel" aria-labelledby="chat-h">
+      <div class="panel-head">
+        <div>
+          <h2 id="chat-h">Ask the agents</h2>
+          <p class="sub">They read the engines and the decision log, and explain. They cannot approve or change anything. Each number is checked against what the tools returned.</p>
+        </div>
+        <button id="chat-new" class="ghost" type="button">New conversation</button>
+      </div>
+      <div class="chips" id="chat-chips"></div>
+      <div class="chat-log" id="chat-log" aria-live="polite"></div>
+      <form class="chat-form" id="chat-form">
+        <label for="chat-q" class="sr-only">Question</label>
+        <input id="chat-q" type="text" maxlength="500" placeholder="e.g. Why is the starter on V05 waiting for an engineer?" autocomplete="off">
+        <button class="primary" type="submit" id="chat-go">Ask</button>
+      </form>
+    </section>
+
     <section class="panel" aria-labelledby="chart-h">
       <div class="panel-head">
         <div>

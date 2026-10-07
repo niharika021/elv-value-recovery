@@ -312,6 +312,86 @@ function renderInbox(ib) {
     decide({ kind: "sign_off", vehicle_id: b.dataset.sign, action: "sign" }, $("inbox-msg"))));
 }
 
+// ---- chat ------------------------------------------------------------------------------------
+// Markdown from the agents: escape everything first, then allow a small, safe subset.
+function inline(t) {
+  return t.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/(^|[\s(])\*([^*\s][^*]*?)\*(?=[\s).,;:]|$)/g, "$1<i>$2</i>");
+}
+function renderMarkdown(md) {
+  const out = []; let list = null;
+  const close = () => { if (list) { out.push(`</${list}>`); list = null; } };
+  for (const raw of esc(md).split(/\r?\n/)) {
+    const line = raw.trimEnd();
+    let m;
+    if (!line.trim()) { close(); continue; }
+    if (/^\s*(---|\*\*\*)\s*$/.test(line)) { close(); out.push("<hr>"); continue; }
+    if ((m = line.match(/^\s*#{1,6}\s+(.*)$/))) { close(); out.push(`<h4>${inline(m[1])}</h4>`); continue; }
+    if ((m = line.match(/^\s*[*-]\s+(.*)$/))) { if (list !== "ul") { close(); out.push("<ul>"); list = "ul"; } out.push(`<li>${inline(m[1])}</li>`); continue; }
+    if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/))) { if (list !== "ol") { close(); out.push("<ol>"); list = "ol"; } out.push(`<li>${inline(m[1])}</li>`); continue; }
+    close(); out.push(`<p>${inline(line)}</p>`);
+  }
+  close();
+  return out.join("");
+}
+
+const CHIPS = [
+  "Why is the starter on V05 waiting for an engineer?",
+  "Is the alternator bearing on V08 OK to reuse?",
+  "Can we dismantle V07?",
+  "Which vehicle has the biggest gap to the informal scrapper before harvesting, and why?",
+  "If we only have 620 technician minutes this month, what do we give up?",
+  "What have engineers decided so far?",
+];
+let chatSid = null;
+try { chatSid = sessionStorage.getItem("elv-chat") || null; } catch (_) {}
+
+function addMsg(html, cls) {
+  const el = document.createElement("div");
+  el.className = cls; el.innerHTML = html;
+  $("chat-log").appendChild(el);
+  el.scrollIntoView({ block: "nearest" });
+  return el;
+}
+
+async function ask(question) {
+  const q = question.trim();
+  if (!q) return;
+  $("chat-q").value = "";
+  $("chat-go").disabled = true;
+  addMsg(esc(q), "msg-q");
+  const pending = addMsg(`<span class="thinking">Asking the agents… 0 s</span>`, "msg-a");
+  const t0 = Date.now();
+  const timer = setInterval(() => { pending.querySelector(".thinking").textContent = `Asking the agents… ${Math.round((Date.now() - t0) / 1000)} s`; }, 1000);
+  try {
+    const r = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: q, session_id: chatSid }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.detail || `Error ${r.status}`);
+    chatSid = d.session_id;
+    try { sessionStorage.setItem("elv-chat", chatSid); } catch (_) {}
+    const ground = d.ungrounded.length
+      ? `<span class="ungrounded">Not found in tool results: ${d.ungrounded.map((n) => esc(n)).join(", ")}</span>`
+      : `<span class="grounded">✓ Every number traced to a tool result</span>`;
+    pending.innerHTML = renderMarkdown(d.answer) + `<div class="msg-meta">${ground}
+      <span>Agents: ${esc(d.agents.join(" → ") || "elv_coordinator")}</span>
+      <span>Tools: ${esc(d.tools.join(", ") || "none")}</span><span>${esc(d.seconds)} s</span></div>`;
+  } catch (e) {
+    pending.innerHTML = `<span class="ungrounded">${esc(e.message)}</span>`;
+  } finally {
+    clearInterval(timer);
+    $("chat-go").disabled = false;
+  }
+}
+
+$("chat-chips").innerHTML = CHIPS.map((c, i) => `<button class="chip" type="button" data-c="${i}">${esc(c)}</button>`).join("");
+$("chat-chips").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => ask(CHIPS[+b.dataset.c])));
+$("chat-form").addEventListener("submit", (e) => { e.preventDefault(); ask($("chat-q").value); });
+$("chat-new").addEventListener("click", () => {
+  chatSid = null; $("chat-log").innerHTML = "";
+  try { sessionStorage.removeItem("elv-chat"); } catch (_) {}
+});
+
 // ---- boot --------------------------------------------------------------------------------
 let current = null, openVid = null;
 

@@ -17,7 +17,9 @@ from app.elv_agent import tools
 
 load_dotenv()
 MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
-CONFIG = types.GenerateContentConfig(temperature=0)
+# A Gemini request occasionally never returns; without a timeout the whole chat hangs for good.
+REQUEST_TIMEOUT_MS = int(os.environ.get("GEMINI_TIMEOUT_MS", "60000"))
+CONFIG = types.GenerateContentConfig(temperature=0, http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS))
 
 GROUND_RULES = """
 Ground rules, always:
