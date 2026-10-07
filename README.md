@@ -16,16 +16,76 @@ Design rule: **agents read and explain; fixed engines own every number; an engin
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TB
+  subgraph IN["Data (synthetic)"]
+    direction LR
+    DWG["20 part drawings (PDF)"]
+    CSV["Vehicles, components, inspections,<br/>prices, compliance evidence (CSV)"]
+  end
+
+  READ["Drawing reader<br/>Gemini on Vertex AI"]
+  GATE["Rule check<br/>5 fixed gates"]
+
+  subgraph ENG["Fixed engines: own every number"]
+    direction LR
+    GRADE["Grading<br/>measurement vs limit"]
+    COMP["Compliance<br/>dismantle / release"]
+    PLAN["Harvest planner<br/>OR-Tools CP-SAT"]
+    VAL["Value<br/>offer, EPR steel, CO2"]
+    AUDIT["Audit pack<br/>per vehicle"]
+    GRADE --> COMP --> PLAN --> VAL --> AUDIT
+  end
+
+  subgraph HUM["Engineer: approves every decision"]
+    direction LR
+    INBOX["Approval inbox<br/>review, plan, sign-off"]
+    LOG[("Decision log<br/>append-only")]
+    INBOX --> LOG
+  end
+
+  WEB["Web app (FastAPI)<br/>dashboard, cards, inbox, chat"]
+
+  subgraph AGT["ADK agents: read and explain"]
+    direction LR
+    COORD["Coordinator"]
+    INSP["Inspection agent"]
+    CAG["Compliance agent"]
+    GRND["Grounding check"]
+    COORD --> INSP
+    COORD --> CAG
+    COORD --> GRND
+  end
+
+  DWG --> READ --> GATE
+  GATE -. "drawing limits, after engineer sign-off" .-> ENG
+  CSV --> ENG
+  ENG -- "audit packs" --> WEB
+  WEB --> HUM
+  WEB -- "/api/chat" --> AGT
+  HUM -- "reviews, exclude / require, sign-off" --> ENG
+  ENG -- "read-only tools" --> AGT
+  HUM -- "decision log, read-only" --> AGT
+```
+
+- **Fixed engines own every number.** Grading, compliance, the OR-Tools planner and the value engine are deterministic Python with 193 offline tests; the audit pack is built only from their outputs.
+- **Gemini reads, it does not decide.** It reads limits off the drawings (each rule must pass 5 fixed gates and an engineer's sign-off) and powers the agents, whose tools are read-only and whose every number is checked against tool results.
+- **An engineer approves every decision.** The approval inbox is the only write path: part reviews, harvest exclude / require, and sign-off, each attributed, reasoned and appended to the log, which the engines then apply.
+- **Runs today** locally (FastAPI + Vertex AI Gemini on project `elv-value-recovery-2026`). **Prepared, not deployed:** one Cloud Run container, with the decision log in Firestore.
+
 ## Repository layout
 
 ```
-data/                      synthetic dataset (CSV) + data/drawings/*.pdf
-scripts/generate_data.py   regenerates every CSV (fixed seed, deterministic)
-scripts/make_drawings.py   regenerates the 20 part drawings
-scripts/check_values.py    first sketch of the value engine: scrap-only vs harvest offer per vehicle
-app/agents/                ADK coordinator, inspection agent, compliance agent        (Day 6-8)
-app/engines/               grading rules, value engine, harvest planner (OR-Tools)    (Day 3-5)
-app/web/                   frontend: vehicle cards, approval inbox, dashboard         (Day 9-11)
+data/                     synthetic dataset (CSV), drawings/*.pdf, extracted/rules_gemini.csv (Gemini's reading)
+scripts/                  regenerate data and drawings; check_values.py (Day 1 value sketch)
+app/engines/              grading, value, planner (OR-Tools), rule_check, compliance, audit, decisions
+app/agents/               drawing_reader.py: Gemini reads the limits off each drawing
+app/elv_agent/            ADK agents (coordinator, inspection, compliance), read-only tools, grounding check
+app/web/                  FastAPI server, chat, static front end (no build step)
+tests/                    193 offline tests (no Gemini, no cloud)
+Dockerfile                one container for Cloud Run
 ```
 
 Regenerate everything:
