@@ -23,7 +23,7 @@ from app.web.chat import ChatLimit, ChatTimeout, RateLimiter, Sessions, answer
 
 STATIC = Path(__file__).resolve().parent / "static"
 
-app = FastAPI(title="ELV Value Recovery Planner", docs_url="/api/docs", openapi_url="/api/openapi.json")
+app = FastAPI(title="CoreYield · ELV Value Recovery Planner", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
 
 def _or_404(result: dict) -> dict:

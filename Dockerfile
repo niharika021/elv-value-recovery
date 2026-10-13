@@ -1,5 +1,5 @@
-# ELV Value Recovery Planner: one container for Cloud Run (API, front end, agents).
-# Not yet built or deployed; see README "Deploying to Cloud Run".
+# CoreYield (ELV Value Recovery Planner): one container for Cloud Run (API, front end, agents).
+# Deployed as the Cloud Run service "coreyield"; see README "Deploying to Cloud Run".
 FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

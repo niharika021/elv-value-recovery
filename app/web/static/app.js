@@ -267,7 +267,7 @@ let lastNote = null;   // survives the re-render that follows a decision
 
 async function decide(body, msgEl) {
   const who = engineer.value.trim();
-  if (!who) { say(msgEl, "Enter your name in the inbox (Engineer) first.", false); return false; }
+  if (!who) { say(msgEl, "Enter your name in the Engineer box at the top first.", false); engineer.focus(); return false; }
   const r = await fetch("/api/decisions", { method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...body, engineer: who }) });
   const data = await r.json().catch(() => ({}));
@@ -430,6 +430,11 @@ let current = null, openVid = null;
 async function loadAll() {
   const [data, ib, rl] = await Promise.all([getJSON("/api/month"), getJSON("/api/inbox"), getJSON("/api/rules")]);
   renderRules(rl);
+  const waiting = ib.reviews.length + ib.ready_to_sign.length;
+  $("nav-inbox").textContent = waiting ? String(waiting) : "";
+  $("nav-inbox").title = `${ib.reviews.length} part(s) to review, ${ib.ready_to_sign.length} vehicle(s) ready to sign`;
+  $("nav-rules").textContent = rl.pending ? String(rl.pending) : "";
+  $("nav-rules").title = `${rl.pending} rule(s) awaiting approval`;
   current = data;
   renderSummary(data.month, data.vehicles);
   renderChart(data.vehicles);
@@ -442,6 +447,23 @@ async function loadAll() {
     lastNote = null;
   }
 }
+
+// ---- tabs: one view at a time, driven by the URL hash so links and the back button work ----------
+const VIEWS = ["overview", "inbox", "rules", "ask"];
+
+function showView(name) {
+  const view = VIEWS.includes(name) ? name : "overview";
+  for (const v of VIEWS) {
+    $(`view-${v}`).hidden = v !== view;
+    const tab = document.querySelector(`.tabs a[data-view="${v}"]`);
+    if (v === view) tab.setAttribute("aria-current", "page"); else tab.removeAttribute("aria-current");
+  }
+  $("tooltip").hidden = true;
+  if (view === "overview" && current) renderChart(current.vehicles);   // its width is known only once visible
+}
+
+addEventListener("hashchange", () => { showView(location.hash.slice(1)); scrollTo(0, 0); });
+showView(location.hash.slice(1));
 
 (async function boot() {
   try {

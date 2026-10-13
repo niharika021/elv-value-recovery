@@ -1,4 +1,4 @@
-# ELV Value Recovery Planner
+# CoreYield · ELV Value Recovery Planner
 
 **Team MECA Queens · Google Cloud AI Builder Cup 2026 · Manufacturing: Intelligent Operations & Industrial Efficiency**
 
@@ -176,7 +176,7 @@ gcloud firestore databases create --location=asia-south1 --project $P
 gcloud iam service-accounts create elv-app --project $P
 gcloud projects add-iam-policy-binding $P --member serviceAccount:elv-app@$P.iam.gserviceaccount.com --role roles/aiplatform.user
 gcloud projects add-iam-policy-binding $P --member serviceAccount:elv-app@$P.iam.gserviceaccount.com --role roles/datastore.user
-gcloud run deploy elv-value-recovery --source . --region asia-south1 --project $P \
+gcloud run deploy coreyield --source . --region asia-south1 --project $P \
   --service-account elv-app@$P.iam.gserviceaccount.com --max-instances 2 --session-affinity \
   --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$P,GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=gemini-3.8-flash,ELV_STORE=firestore \
   --no-allow-unauthenticated   # or --allow-unauthenticated for a public demo

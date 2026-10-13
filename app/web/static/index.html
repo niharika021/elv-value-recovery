@@ -3,97 +3,144 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ELV Value Recovery</title>
+  <title>CoreYield · ELV Value Recovery</title>
+  <meta name="description" content="CoreYield: ELV value recovery for registered vehicle scrapping facilities. Fixed engines own every number; an engineer approves every decision.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <script>
+    // Stamp the saved theme before first paint, so a saved choice never flashes the other theme.
+    try { var t = localStorage.getItem("elv-theme"); if (t) document.documentElement.dataset.theme = t; } catch (_) {}
+  </script>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
   <div class="demo-banner" role="note"><b>DEMO DATA</b> · Synthetic vehicle, component, price and evidence dataset.
     Engineering thresholds shown are demonstration rules and are not production or legal requirements.</div>
-  <header class="top">
-    <div>
-      <h1>ELV Value Recovery Planner</h1>
-      <p class="sub">Synthetic RVSF month, October 2026 · engines own every number · an engineer approves every decision</p>
+
+  <header class="appbar">
+    <div class="appbar-inner">
+      <a class="brand" href="#overview" title="CoreYield · ELV Value Recovery Planner">
+        <!-- The mark: a part core inside a recovery arrow. -->
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M20.2 9.2A8.6 8.6 0 1 0 20.6 14" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M21.6 5.4v4.4h-4.4" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="3.6" fill="var(--ok)"/>
+        </svg>
+        <span class="brand-name">CoreYield</span>
+      </a>
+      <nav class="tabs" aria-label="Views">
+        <a href="#overview" data-view="overview">Overview</a>
+        <a href="#inbox" data-view="inbox">Inbox <span class="count" id="nav-inbox"></span></a>
+        <a href="#rules" data-view="rules">Drawing rules <span class="count" id="nav-rules"></span></a>
+        <a href="#ask" data-view="ask">Ask</a>
+      </nav>
+      <div class="appbar-right">
+        <label class="who"><span>Engineer</span>
+          <input id="engineer" type="text" autocomplete="name" placeholder="Your name" maxlength="80"></label>
+        <button id="theme" class="icon-btn" type="button" aria-label="Switch colour theme" title="Switch colour theme">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+        </button>
+      </div>
     </div>
-    <button id="theme" class="ghost" type="button" aria-label="Switch colour theme">Theme</button>
   </header>
 
   <main>
-    <section class="summary" aria-labelledby="summary-h">
-      <h2 id="summary-h" class="sr-only">Month summary</h2>
-      <div class="hero">
-        <div class="hero-label">Average informal-offer gap closed</div>
-        <div class="hero-value" id="hero-value">–</div>
-        <div class="hero-note" id="hero-note"></div>
+    <!-- Overview -------------------------------------------------------------------------- -->
+    <section class="view" id="view-overview" aria-labelledby="overview-h">
+      <div class="page-head">
+        <div>
+          <h1 id="overview-h">ELV Value Recovery Planner</h1>
+          <p class="purpose">Synthetic RVSF month, October 2026 · fixed engines own every number · an engineer approves every decision</p>
+        </div>
       </div>
-      <div class="tiles" id="tiles"></div>
+
+      <div class="kpis">
+        <div class="kpi-lead">
+          <div class="kpi-label">Average informal-offer gap closed</div>
+          <div class="kpi-hero" id="hero-value">–</div>
+          <div class="kpi-hint" id="hero-note"></div>
+        </div>
+        <div class="tiles" id="tiles"></div>
+      </div>
+
+      <section class="panel" aria-labelledby="chart-h">
+        <div class="panel-head">
+          <div>
+            <h2 id="chart-h">Owner offer against the informal scrapper</h2>
+            <p class="purpose">Per vehicle, INR. The dotted line is what the informal scrapper still pays more.</p>
+          </div>
+          <button id="table-toggle" class="btn secondary" type="button" aria-pressed="false">Show table</button>
+        </div>
+        <div class="legend" id="legend"></div>
+        <div id="chart" class="chart" role="img" aria-label="Offers per vehicle against the informal offer"></div>
+        <div id="chart-table" class="table-wrap" hidden></div>
+      </section>
+
+      <section aria-labelledby="cards-h">
+        <h2 id="cards-h" class="section-title">Vehicles</h2>
+        <div class="cards" id="cards"></div>
+      </section>
     </section>
 
-    <section class="panel" aria-labelledby="inbox-h">
-      <div class="panel-head">
+    <!-- Inbox ------------------------------------------------------------------------------ -->
+    <section class="view" id="view-inbox" aria-labelledby="inbox-h" hidden>
+      <div class="page-head">
         <div>
-          <h2 id="inbox-h">Approval inbox</h2>
-          <p class="sub">Engineers decide here. Every decision is attributed, needs a reason, and is never edited afterwards.</p>
+          <h1 id="inbox-h">Approval inbox</h1>
+          <p class="purpose">Engineers decide here. Every decision is attributed, needs a reason, and is never edited afterwards.</p>
         </div>
-        <label class="who">Engineer <input id="engineer" type="text" autocomplete="name" placeholder="Your name" maxlength="80"></label>
       </div>
       <div id="inbox-msg" class="msg" role="status" aria-live="polite"></div>
       <div id="inbox"></div>
-      <details class="rules-panel" id="rules-panel">
-        <summary><b>Drawing rules read by Gemini</b> <span id="rules-count" class="muted"></span></summary>
-        <p class="sub">Gemini's reading grades nothing until an engineer approves it; until then the baseline rule applies.
-          A reading that failed the fixed checks cannot be approved. Demonstration rules, not production or legal requirements.</p>
-        <div id="rules-msg" class="msg" role="status" aria-live="polite"></div>
-        <div id="rules"></div>
-      </details>
     </section>
 
-    <section class="panel" aria-labelledby="chat-h">
-      <div class="panel-head">
+    <!-- Drawing rules ---------------------------------------------------------------------- -->
+    <section class="view" id="view-rules" aria-labelledby="rules-h" hidden>
+      <div class="page-head">
         <div>
-          <h2 id="chat-h">Ask the agents</h2>
-          <p class="sub">They read the engines and the decision log, and explain. They cannot approve or change anything. Each number is checked against what the tools returned.</p>
+          <h1 id="rules-h">Drawing rules <span id="rules-count" class="count-inline"></span></h1>
+          <p class="purpose">Gemini's reading grades nothing until an engineer approves it; until then the baseline rule applies.
+            A reading that failed the fixed checks cannot be approved. Demonstration rules, not production or legal requirements.</p>
         </div>
-        <button id="chat-new" class="ghost" type="button">New conversation</button>
       </div>
-      <div class="chips" id="chat-chips"></div>
-      <div class="chat-log" id="chat-log" aria-live="polite"></div>
-      <form class="chat-form" id="chat-form">
-        <label for="chat-q" class="sr-only">Question</label>
-        <input id="chat-q" type="text" maxlength="500" placeholder="e.g. Why is the starter on V05 waiting for an engineer?" autocomplete="off">
-        <button class="primary" type="submit" id="chat-go">Ask</button>
-      </form>
+      <div id="rules-msg" class="msg" role="status" aria-live="polite"></div>
+      <div class="panel flush"><div id="rules"></div></div>
     </section>
 
-    <section class="panel" aria-labelledby="chart-h">
-      <div class="panel-head">
+    <!-- Ask -------------------------------------------------------------------------------- -->
+    <section class="view" id="view-ask" aria-labelledby="ask-h" hidden>
+      <div class="page-head">
         <div>
-          <h2 id="chart-h">Owner offer against the informal scrapper</h2>
-          <p class="sub">Per vehicle, INR. The gap left is what the informal scrapper still pays more.</p>
+          <h1 id="ask-h">Ask the agents</h1>
+          <p class="purpose">They read the engines and the decision log, and explain. They cannot approve or change anything. Every number is checked against what the tools returned.</p>
         </div>
-        <button id="table-toggle" class="ghost" type="button" aria-pressed="false">Show table</button>
+        <button id="chat-new" class="btn secondary" type="button">New conversation</button>
       </div>
-      <div class="legend" id="legend"></div>
-      <div id="chart" class="chart" role="img" aria-label="Offers per vehicle against the informal offer"></div>
-      <div id="chart-table" class="table-wrap" hidden></div>
-    </section>
-
-    <section aria-labelledby="cards-h">
-      <h2 id="cards-h">Vehicles</h2>
-      <div class="cards" id="cards"></div>
+      <section class="panel">
+        <div class="chips" id="chat-chips"></div>
+        <div class="chat-log" id="chat-log" aria-live="polite"></div>
+        <form class="chat-form" id="chat-form">
+          <label for="chat-q" class="sr-only">Question</label>
+          <input id="chat-q" type="text" maxlength="500" placeholder="e.g. Why is the starter on V05 waiting for an engineer?" autocomplete="off">
+          <button class="btn primary" type="submit" id="chat-go">Ask</button>
+        </form>
+      </section>
     </section>
   </main>
 
   <dialog id="detail" aria-labelledby="detail-title">
     <div class="detail-head">
       <h2 id="detail-title"></h2>
-      <button class="ghost" type="button" id="detail-close" aria-label="Close">Close</button>
+      <button class="btn secondary" type="button" id="detail-close" aria-label="Close">Close</button>
     </div>
     <div id="detail-body"></div>
   </dialog>
 
   <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
 
-  <footer>All vehicles, parts, drawings, prices and evidence are invented for a hackathon demo. The compliance rule pack is a simplified summary, not legal advice.</footer>
+  <footer>CoreYield · Team MECA Queens · Google Cloud AI Builder Cup 2026. All vehicles, parts, drawings, prices and evidence are invented for a hackathon demo.
+    The compliance rule pack is a simplified summary, not legal advice.</footer>
   <script src="/static/app.js"></script>
 </body>
 </html>

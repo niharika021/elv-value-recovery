@@ -15,7 +15,11 @@ def empty_decision_log():
 
 
 def test_page_and_assets_are_served():
-    assert "ELV Value Recovery Planner" in client.get("/").text
+    page = client.get("/").text
+    assert '<span class="brand-name">CoreYield</span>' in page and "<title>CoreYield" in page
+    assert "ELV Value Recovery Planner" in page and "DEMO DATA" in page
+    for view in ("overview", "inbox", "rules", "ask"):          # the four tabs and their views
+        assert f'data-view="{view}"' in page and f'id="view-{view}"' in page
     for f in ("app.js", "styles.css"):
         assert client.get(f"/static/{f}").status_code == 200
 

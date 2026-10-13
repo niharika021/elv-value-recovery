@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 690" width="900" height="690" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
-<title id="t">ELV Value Recovery Planner architecture</title>
+<title id="t">CoreYield (ELV Value Recovery Planner) architecture</title>
 <desc id="d">Part drawings go to a Gemini drawing reader with 5 fixed gates; its limits, after engineer sign-off, and the vehicle data feed the fixed engines (grading, compliance, harvest planner, value, audit pack). Audit packs feed the web app. The engineer's approval inbox writes an append-only decision log that the engines apply. ADK agents read engine outputs and the log through read-only tools and answer chat questions from the web app.</desc>
 <defs>
 <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52514e"/></marker>
