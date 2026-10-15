@@ -302,3 +302,18 @@ dialog::backdrop { background: rgb(10 15 20 / 0.45); }
 .how-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 a.btn { text-decoration: none; }
 @media (max-width: 900px) { .how-steps { grid-template-columns: 1fr; gap: 10px; } }
+
+/* ---- assistant: one chat, in the Ask tab or a side panel on any screen ---------------------------- */
+.assistant-btn { padding: 6px 11px; }
+.chat-box { display: grid; gap: 12px; }
+.chat-tools { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.chat-tools .chips { margin-bottom: 0; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 70; width: min(460px, 100vw); display: flex; flex-direction: column;
+  background: var(--raised); border-left: 1px solid var(--border); box-shadow: var(--shadow-raised); }
+.drawer[hidden] { display: none; }
+.drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 16px 12px; border-bottom: 1px solid var(--border); }
+.drawer-body { flex: 1 1 auto; overflow-y: auto; padding: 14px 16px 16px; }
+.drawer .chat-tools { flex-direction: column-reverse; align-items: stretch; }
+.drawer .chat-tools .btn { align-self: flex-end; }
+.drawer .chat-log { max-height: none; }
+@media (max-width: 900px) { .assistant-btn span { display: none; } }

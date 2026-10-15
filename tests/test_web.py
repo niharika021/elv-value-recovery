@@ -86,3 +86,10 @@ def test_firebase_hosting_config_serves_the_page_and_forwards_the_api():
     assert {"source": "/", "destination": "/static/index.html"} in h["rewrites"]
     assert Path("app/web/static/index.html").exists()
     assert json.loads(Path(".firebaserc").read_text())["projects"]["default"] == "elv-value-recovery-2026"
+
+
+def test_how_it_works_and_the_assistant_are_on_the_page():
+    page = client.get("/").text
+    assert 'class="how"' in page and "Engineer approves" in page and 'id="how-start"' in page
+    assert 'id="assistant-open"' in page and 'id="assistant"' in page and 'id="drawer-slot"' in page
+    assert page.count('id="chat-box"') == 1          # one conversation, shared by the Ask tab and the side panel

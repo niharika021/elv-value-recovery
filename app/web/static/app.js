@@ -455,6 +455,29 @@ $("how-ask").addEventListener("click", () => {
   setTimeout(() => ask("Why is the starter on V05 waiting for an engineer?"), 0);
 });
 
+// ---- assistant: the same chat, borrowed by a side panel on any screen ---------------------------
+function placeChat(slotId) { const box = $("chat-box"); if (box.parentElement.id !== slotId) $(slotId).appendChild(box); }
+
+function openAssistant() {
+  if (location.hash === "#ask") { $("chat-q").focus(); return; }   // already on the full Ask screen
+  placeChat("drawer-slot");
+  $("assistant").hidden = false;
+  $("assistant-open").setAttribute("aria-expanded", "true");
+  $("chat-q").focus();
+}
+
+function closeAssistant() {
+  if ($("assistant").hidden) return;
+  $("assistant").hidden = true;
+  $("assistant-open").setAttribute("aria-expanded", "false");
+  placeChat("ask-slot");
+  $("assistant-open").focus();
+}
+
+$("assistant-open").addEventListener("click", () => ($("assistant").hidden ? openAssistant() : closeAssistant()));
+$("assistant-close").addEventListener("click", closeAssistant);
+addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("assistant").hidden && !$("detail").open) closeAssistant(); });
+
 // ---- tabs: one view at a time, driven by the URL hash so links and the back button work ----------
 const VIEWS = ["overview", "inbox", "rules", "ask"];
 
@@ -466,6 +489,7 @@ function showView(name) {
     if (v === view) tab.setAttribute("aria-current", "page"); else tab.removeAttribute("aria-current");
   }
   $("tooltip").hidden = true;
+  if (view === "ask") closeAssistant();   // the Ask tab shows the same conversation full-width
   if (view === "overview" && current) renderChart(current.vehicles);   // its width is known only once visible
 }
 

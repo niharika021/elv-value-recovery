@@ -36,6 +36,10 @@
         <a href="#ask" data-view="ask">Ask</a>
       </nav>
       <div class="appbar-right">
+        <button id="assistant-open" class="btn primary assistant-btn" type="button" aria-controls="assistant" aria-expanded="false"
+          title="Ask CoreYield from any screen">
+          <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v10H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>
+          <span>Ask CoreYield</span></button>
         <label class="who"><span>Engineer</span>
           <input id="engineer" type="text" autocomplete="name" placeholder="Your name" maxlength="80"></label>
         <button id="theme" class="icon-btn" type="button" aria-label="Switch colour theme" title="Switch colour theme">
@@ -132,19 +136,37 @@
           <h1 id="ask-h">Ask the agents</h1>
           <p class="purpose">They read the engines and the decision log, and explain. They cannot approve or change anything. Every number is checked against what the tools returned.</p>
         </div>
-        <button id="chat-new" class="btn secondary" type="button">New conversation</button>
       </div>
-      <section class="panel">
-        <div class="chips" id="chat-chips"></div>
-        <div class="chat-log" id="chat-log" aria-live="polite"></div>
-        <form class="chat-form" id="chat-form">
-          <label for="chat-q" class="sr-only">Question</label>
-          <input id="chat-q" type="text" maxlength="500" placeholder="e.g. Why is the starter on V05 waiting for an engineer?" autocomplete="off">
-          <button class="btn primary" type="submit" id="chat-go">Ask</button>
-        </form>
+      <section class="panel" id="ask-slot">
+        <!-- One conversation: this box moves between the Ask tab and the side panel. -->
+        <div id="chat-box" class="chat-box">
+          <div class="chat-tools">
+            <div class="chips" id="chat-chips"></div>
+            <button id="chat-new" class="btn secondary" type="button">New conversation</button>
+          </div>
+          <div class="chat-log" id="chat-log" aria-live="polite"></div>
+          <form class="chat-form" id="chat-form">
+            <label for="chat-q" class="sr-only">Question</label>
+            <input id="chat-q" type="text" maxlength="500" placeholder="e.g. Why is the starter on V05 waiting for an engineer?" autocomplete="off">
+            <button class="btn primary" type="submit" id="chat-go">Ask</button>
+          </form>
+        </div>
       </section>
     </section>
   </main>
+
+  <aside id="assistant" class="drawer" aria-labelledby="assistant-h" hidden>
+    <div class="drawer-head">
+      <div>
+        <h2 id="assistant-h">Ask CoreYield</h2>
+        <p class="purpose">Explains from the engines and the decision log. Cannot approve or change anything.</p>
+      </div>
+      <button id="assistant-close" class="icon-btn" type="button" aria-label="Close the assistant" title="Close (Esc)">
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="drawer-slot" class="drawer-body"></div>
+  </aside>
 
   <dialog id="detail" aria-labelledby="detail-title">
     <div class="detail-head">
