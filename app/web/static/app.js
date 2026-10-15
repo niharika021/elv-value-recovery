@@ -463,6 +463,7 @@ function openAssistant() {
   placeChat("drawer-slot");
   $("assistant").hidden = false;
   $("assistant-open").setAttribute("aria-expanded", "true");
+  $("assistant-open").classList.add("active");
   $("chat-q").focus();
 }
 
@@ -470,6 +471,7 @@ function closeAssistant() {
   if ($("assistant").hidden) return;
   $("assistant").hidden = true;
   $("assistant-open").setAttribute("aria-expanded", "false");
+  $("assistant-open").classList.remove("active");
   placeChat("ask-slot");
   $("assistant-open").focus();
 }
@@ -485,7 +487,8 @@ function showView(name) {
   const view = VIEWS.includes(name) ? name : "overview";
   for (const v of VIEWS) {
     $(`view-${v}`).hidden = v !== view;
-    const tab = document.querySelector(`.tabs a[data-view="${v}"]`);
+    const tab = document.querySelector(`.tabs a[data-view="${v}"]`);   // Ask has no tab: it opens from the corner button
+    if (!tab) continue;
     if (v === view) tab.setAttribute("aria-current", "page"); else tab.removeAttribute("aria-current");
   }
   $("tooltip").hidden = true;
