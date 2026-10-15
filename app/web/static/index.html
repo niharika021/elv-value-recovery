@@ -59,6 +59,7 @@
           <div class="kpi-label">Average informal-offer gap closed</div>
           <div class="kpi-hero" id="hero-value">–</div>
           <div class="kpi-hint" id="hero-note"></div>
+          <div class="gapbars" id="gapbars" aria-hidden="true"></div>
         </div>
         <div class="tiles" id="tiles"></div>
       </div>
@@ -78,6 +79,34 @@
           <a class="btn secondary" href="#inbox">Open the Inbox</a>
           <a class="btn secondary" href="#ask" id="how-ask">Ask why V05 is flagged</a>
         </div>
+        <div class="stories" aria-label="Demo stories">
+          <span class="stories-label">Try a story</span>
+          <button type="button" class="story" data-vid="V05">V05 · brushes below the drawing limit</button>
+          <button type="button" class="story" data-vid="V08">V08 · borderline bearing, "slight noise"</button>
+          <button type="button" class="story" data-vid="V07">V07 · no depollution record: blocked</button>
+          <button type="button" class="story" data-vid="V03">V03 · converter worth half the steel</button>
+          <button type="button" class="story" data-vid="V10">V10 · converter missing at intake</button>
+        </div>
+      </section>
+
+      <!-- 2. what-if: the OR-Tools planner, live -->
+      <section class="panel whatif" aria-labelledby="wi-h">
+        <div class="panel-head">
+          <div>
+            <h2 id="wi-h">What if we have fewer technician minutes?</h2>
+            <p class="purpose">Drag to set the harvesting time available this month. The OR-Tools planner re-picks the parts; vehicles blocked by compliance stay blocked.</p>
+          </div>
+        </div>
+        <div class="wi-row">
+          <label for="wi-min" class="wi-label">Technician minutes <b id="wi-min-out">–</b></label>
+          <input id="wi-min" type="range" min="0" step="1" value="0" aria-describedby="wi-h">
+        </div>
+        <div class="wi-out" id="wi-out" aria-live="polite">
+          <div><span>Gap closed</span><b id="wi-gap">–</b></div>
+          <div><span>Parts harvested</span><b id="wi-parts">–</b></div>
+          <div><span>Harvest gain</span><b id="wi-gain">–</b></div>
+          <div><span>Parts left for lack of time</span><b id="wi-left">–</b></div>
+        </div>
       </section>
 
       <section class="panel" aria-labelledby="chart-h">
@@ -94,8 +123,28 @@
       </section>
 
       <section aria-labelledby="cards-h">
-        <h2 id="cards-h" class="section-title">Vehicles</h2>
+        <div class="cards-head">
+          <h2 id="cards-h">Vehicles</h2>
+          <div class="cards-tools">
+            <div class="seg" role="group" aria-label="Filter vehicles" id="card-filter">
+              <button type="button" data-f="all" aria-pressed="true">All <span></span></button>
+              <button type="button" data-f="ready" aria-pressed="false">Ready to sign <span></span></button>
+              <button type="button" data-f="open" aria-pressed="false">Open items <span></span></button>
+              <button type="button" data-f="blocked" aria-pressed="false">Blocked <span></span></button>
+            </div>
+            <label class="sr-only" for="card-q">Find a vehicle</label>
+            <input id="card-q" type="text" placeholder="Find V05, suv, flood…" autocomplete="off">
+            <label class="sr-only" for="card-sort">Sort vehicles</label>
+            <select id="card-sort">
+              <option value="gap">Largest gap first</option>
+              <option value="closed">Most gap closed</option>
+              <option value="offer">Highest offer</option>
+              <option value="id">Vehicle number</option>
+            </select>
+          </div>
+        </div>
         <div class="cards" id="cards"></div>
+        <p class="muted" id="cards-empty" hidden>No vehicle matches.</p>
       </section>
     </section>
 

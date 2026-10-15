@@ -234,6 +234,7 @@ def test_month_kpis_are_consistent_engine_aggregates():
     gap_drop = m["average_gap_scrap_only_inr"] - m["average_gap_inr"]
     assert abs((m["average_offer_inr"] - m["average_offer_scrap_only_inr"]) - gap_drop) <= 1
     assert m["open_items"] == sum(len(p["open_items"]) for p in packs.values())
+    assert m["harvest_minutes"] == sum(p["plan"]["minutes"] for p in packs.values()) > 0
 
 
 # ==== API ============================================================================================
@@ -257,3 +258,10 @@ def test_rules_api_and_approval_flow(client):
     assert bad.status_code == 400 and "fixed checks" in bad.json()["detail"]
     inbox = client.get("/api/inbox").json()
     assert inbox["rules_pending"] == 18 and inbox["recent"][0]["outcome"].startswith("STR-03 is graded with: Gemini")
+
+
+
+def test_what_if_at_full_minutes_matches_the_month_overview():
+    m = tools.month_overview()["month"]
+    w = tools.plan_what_if(m["harvest_minutes"])
+    assert (w["gap_closed_pct"], w["harvest_gain_inr"], w["left_for_capacity"]) == (m["gap_closed_pct"], m["harvest_gain_inr"], [])

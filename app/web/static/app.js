@@ -29,8 +29,32 @@ async function getJSON(url) {
 })();
 
 // ---- summary --------------------------------------------------------------------------
+let heroShown = null;
+const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function countUp(el, to, suffix = "") {
+  if (calm() || heroShown === to) { el.textContent = `${to}${suffix}`; return; }
+  const from = heroShown ?? 0, t0 = performance.now(), dur = 700;
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / dur), e = 1 - (1 - k) ** 3;
+    el.textContent = `${Math.round(from + (to - from) * e)}${suffix}`;
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 function renderSummary(m, vehicles) {
-  $("hero-value").textContent = `${m.gap_closed_pct}%`;
+  countUp($("hero-value"), m.gap_closed_pct, "%");
+  heroShown = m.gap_closed_pct;
+  const before = m.average_gap_scrap_only_inr, after = m.average_gap_inr;
+  $("gapbars").innerHTML = `
+    <div class="gapbar before"><span>Scrap only</span><div class="track"><div class="fill"></div></div><b>${inr(before)}</b></div>
+    <div class="gapbar after"><span>With harvesting</span><div class="track"><div class="fill"></div></div><b>${inr(after)}</b></div>`;
+  const fills = $("gapbars").querySelectorAll(".fill");
+  void $("gapbars").offsetWidth;                 // lay out at 0 first, so the widths animate (works in background tabs too)
+  fills[0].style.width = "100%";
+  fills[1].style.width = `${Math.max(0, Math.min(100, 100 * after / before))}%`;
+  initWhatIf(m);
   $("hero-note").innerHTML = `The informal scrapper outbids us by ${inr(m.average_gap_scrap_only_inr)} per vehicle on scrap value alone;
     harvesting cuts that to ${inr(m.average_gap_inr)}.`;
   const tiles = [
@@ -121,12 +145,43 @@ $("table-toggle").addEventListener("click", (e) => {
 });
 
 // ---- cards -----------------------------------------------------------------------------
-function renderCards(vehicles) {
+const cardState = { f: "all", q: "", sort: "gap" };
+const FILTERS = {
+  all: () => true,
+  ready: (v) => v.approval === "ready" || v.approval === "signed",
+  open: (v) => v.open_items > 0 && v.compliance !== "red",
+  blocked: (v) => v.compliance === "red",
+};
+const SORTS = {
+  gap: (a, b) => b.gap_inr - a.gap_inr,
+  closed: (a, b) => b.gap_closed_pct - a.gap_closed_pct,
+  offer: (a, b) => b.offer_inr - a.offer_inr,
+  id: (a, b) => a.vehicle_id.localeCompare(b.vehicle_id),
+};
+
+function cardBar(v) {
+  const pct = (x) => Math.max(0, Math.min(100, 100 * x / v.informal_offer_inr));
+  return `<div class="cbar" title="Scrap-only ${inr(v.offer_scrap_only_inr)} → with harvesting ${inr(v.offer_inr)}, against the informal ${inr(v.informal_offer_inr)}">
+    <div class="track"><div class="gain" style="width:${pct(v.offer_inr)}%"></div><div class="scrap" style="width:${pct(v.offer_scrap_only_inr)}%"></div></div>
+    <div class="cap"><span>${num(v.gap_closed_pct)}% of gap closed</span><span>informal ${inr(v.informal_offer_inr)}</span></div></div>`;
+}
+
+function renderCards(all) {
+  for (const b of document.querySelectorAll("#card-filter button")) {
+    b.querySelector("span").textContent = all.filter(FILTERS[b.dataset.f]).length;
+    b.setAttribute("aria-pressed", String(b.dataset.f === cardState.f));
+  }
+  const q = cardState.q.trim().toLowerCase();
+  const vehicles = all.filter(FILTERS[cardState.f])
+    .filter((v) => !q || `${v.vehicle_id} ${v.segment} ${v.condition} ${v.compliance}`.toLowerCase().includes(q))
+    .sort(SORTS[cardState.sort]);
+  $("cards-empty").hidden = vehicles.length > 0;
   $("cards").innerHTML = vehicles.map((v) => `
     <button class="card" type="button" data-vid="${esc(v.vehicle_id)}">
       <div class="row1"><span class="vid">${esc(v.vehicle_id)}</span>${pill(v.compliance)}</div>
       <div class="meta">${esc(v.segment)} · ${esc(v.condition)}</div>
       <div class="offer">${inr(v.offer_inr)} <small>vs ${inr(v.informal_offer_inr)} informal</small></div>
+      ${cardBar(v)}
       <div class="facts"><span>Gap left <b>${inr(v.gap_inr)}</b></span><span>Parts <b>${num(v.parts_harvested)}</b></span>
         <span>Open items <b>${num(v.open_items)}</b></span></div>
       <div>${approvalPill(v.approval)}</div>
@@ -447,6 +502,43 @@ async function loadAll() {
     lastNote = null;
   }
 }
+
+// ---- overview interactions: stories, card tools, what-if ----------------------------------------
+document.querySelectorAll(".story").forEach((b) => b.addEventListener("click", () => openVehicle(b.dataset.vid)));
+$("card-filter").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-f]"); if (!b) return;
+  cardState.f = b.dataset.f; if (current) renderCards(current.vehicles);
+});
+$("card-q").addEventListener("input", (e) => { cardState.q = e.target.value; if (current) renderCards(current.vehicles); });
+$("card-sort").addEventListener("change", (e) => { cardState.sort = e.target.value; if (current) renderCards(current.vehicles); });
+
+let wiReady = false, wiTimer = null, wiSeq = 0;
+function initWhatIf(m) {
+  const s = $("wi-min");
+  if (!wiReady) { s.max = String(m.harvest_minutes); s.value = String(m.harvest_minutes); wiReady = true; runWhatIf(); }
+  else if (+s.max !== m.harvest_minutes) { s.max = String(m.harvest_minutes); runWhatIf(); }
+}
+async function runWhatIf() {
+  const minutes = +$("wi-min").value, seq = ++wiSeq;
+  $("wi-min-out").textContent = `${num(minutes)} of ${num(+$("wi-min").max)}`;
+  $("wi-out").classList.add("busy");
+  try {
+    const w = await getJSON(`/api/what-if?capacity_minutes=${minutes}`);
+    if (seq !== wiSeq) return;                       // a newer drag has already asked
+    $("wi-gap").textContent = `${w.gap_closed_pct}%`;
+    $("wi-parts").textContent = num(w.parts_harvested);
+    $("wi-gain").textContent = inr(w.harvest_gain_inr);
+    $("wi-left").textContent = num(w.left_for_capacity.length);
+  } catch (e) {
+    if (seq === wiSeq) $("wi-gap").textContent = "–";
+  } finally {
+    if (seq === wiSeq) $("wi-out").classList.remove("busy");
+  }
+}
+$("wi-min").addEventListener("input", () => {
+  $("wi-min-out").textContent = `${num(+$("wi-min").value)} of ${num(+$("wi-min").max)}`;
+  clearTimeout(wiTimer); wiTimer = setTimeout(runWhatIf, 250);
+});
 
 // ---- how it works: the two guided starts ------------------------------------------------------
 $("how-start").addEventListener("click", () => openVehicle("V05"));

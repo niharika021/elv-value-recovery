@@ -64,6 +64,7 @@ def month_overview() -> dict:
         average_offer_scrap_only_inr=round(t.offer_scrap_only_inr.mean()),
         average_offer_inr=round(t.offer_inr.mean()),
         harvest_gain_inr=round(t.harvest_gain_inr.sum()),
+        harvest_minutes=int(sum(p["plan"]["minutes"] for p in _packs().values())),
         open_items=int(t.open_items.sum()),
         steel_to_recycler_kg=round(sum(p["value"]["steel_to_recycler_kg"] for p in _packs().values())),
         co2_avoided_kg=round(sum(p["value"]["co2_avoided_kg"] for p in _packs().values())),
@@ -94,12 +95,14 @@ def plan_what_if(capacity_minutes: int) -> dict:
     blocked = dismantle_blocked()
     exclude, require = harvest_instructions(STORE.all())
     plan = plan_harvest(capacity_minutes=capacity_minutes, blocked=blocked, exclude=exclude, require=require)
-    t = month_table(value_month(plan.harvests, with_grading=False))
+    priced = value_month(plan.harvests, with_grading=False)
+    t = month_table(priced)
     before = (t.informal - t.offer_scrap_only).mean()
     left = plan.dropped[plan.dropped.why == "labour capacity"]
     return _clean(dict(capacity_minutes=capacity_minutes, minutes_used=plan.minutes,
                        parts_harvested=int(sum(map(len, plan.harvests.values()))),
-                       harvest_gain_inr=round(plan.gain), gap_closed_pct=round(100 * (1 - t.gap.mean() / before)),
+                       harvest_gain_inr=round(sum(v.harvest_gain for v in priced)),   # same sum as the month overview
+                       gap_closed_pct=round(100 * (1 - t.gap.mean() / before)),
                        blocked_before_dismantling=sorted(blocked),
                        offers_inr=dict(zip(t.vehicle, t.offer)),
                        left_for_capacity=left[["vehicle_id", "component", "net", "minutes"]].to_dict("records")))

@@ -326,3 +326,58 @@ body { padding-bottom: 76px; }                       /* keep the footer clear of
   .drawer { inset: 0; width: 100%; height: 100%; border-radius: 0; border: 0; }
   .fab.active { display: none; }                     /* full-screen panel: close with its own button */
 }
+
+/* ---- overview: interactive pieces ----------------------------------------------------------------- */
+.gapbars { margin-top: 12px; display: grid; gap: 6px; }
+.gapbar { display: grid; grid-template-columns: 112px 1fr auto; align-items: center; gap: 8px; font: 400 var(--text-label) var(--font-mono); color: var(--ink-soft); }
+.gapbar .track { height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--accent) 12%, var(--panel)); overflow: hidden; }
+.gapbar .fill { height: 100%; border-radius: 4px; width: 0; transition: width .7s ease; }
+.gapbar.before .fill { background: var(--series-2); }
+.gapbar.after .fill { background: var(--accent); }
+.gapbar b { color: var(--ink); font-weight: 600; }
+
+.stories { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.stories-label { font: 500 var(--text-micro)/1.4 var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); margin-right: 4px; }
+.story { font: 500 var(--text-label)/1.4 var(--font-body); color: var(--ink); background: var(--sunken); border: 1px solid var(--border);
+  border-radius: 999px; padding: 4px 11px; cursor: pointer; transition: border-color .12s, background .12s; }
+.story:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); }
+
+.wi-row { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 14px; margin: 4px 0 14px; }
+.wi-label { font-size: var(--text-sm); color: var(--ink-soft); white-space: nowrap; }
+.wi-label b { font-family: var(--font-mono); color: var(--ink); }
+input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+.wi-out { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: opacity .15s; }
+.wi-out.busy { opacity: .55; }
+.wi-out > div { background: var(--panel); padding: 10px 14px; display: grid; gap: 2px; }
+.wi-out span { font: 500 var(--text-micro)/1.45 var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); }
+.wi-out b { font: 700 22px/1.2 var(--font-display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.wi-out > div:first-child b { color: var(--accent); }
+
+.cards-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.cards-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cards-tools input[type=text] { width: 190px; }
+.seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button { font: 600 var(--text-label)/1.2 var(--font-body); padding: 7px 10px; background: transparent; color: var(--ink-soft); border: 0; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button:hover { background: var(--panel-hover); color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-strong); }
+.seg button span { font-family: var(--font-mono); font-weight: 500; color: var(--ink-faint); margin-left: 2px; }
+
+.card { transition: border-color .12s, transform .12s, box-shadow .12s; }
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-raised); }
+.cbar { display: grid; gap: 4px; }
+.cbar .track { position: relative; height: 8px; border-radius: 4px; background: var(--sunken); overflow: hidden; }
+.cbar .scrap, .cbar .gain { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 4px; }
+.cbar .scrap { background: var(--series-2); }
+.cbar .gain { background: var(--accent); }
+.cbar .cap { display: flex; justify-content: space-between; font: 400 var(--text-micro)/1.4 var(--font-mono); color: var(--ink-faint); }
+
+.view:not([hidden]) { animation: viewin .18s ease-out; }
+@keyframes viewin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 900px) {
+  .wi-out { grid-template-columns: repeat(2, 1fr); }
+  .wi-row { grid-template-columns: 1fr; gap: 6px; }
+  .cards-tools input[type=text] { width: 140px; }
+}
+@media (prefers-reduced-motion: reduce) { .card:hover { transform: none; } .view:not([hidden]) { animation: none; } }
