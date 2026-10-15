@@ -290,3 +290,15 @@ dialog::backdrop { background: rgb(10 15 20 / 0.45); }
   .inbox-grid, .detail-grid { grid-template-columns: 1fr; }
   .kpi-hero { font-size: 44px; }
 }
+
+/* ---- how it works strip ---------------------------------------------------------------------- */
+.how { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px 16px; display: grid; gap: 12px; }
+.how-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.how-steps li { display: flex; gap: 10px; align-items: flex-start; }
+.how-steps b { font: 600 var(--text-body)/1.4 var(--font-display); color: var(--ink); }
+.how-steps p { margin: 2px 0 0; font-size: var(--text-sm); color: var(--ink-soft); line-height: 1.5; }
+.how-n { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  font: 600 var(--text-label)/1 var(--font-mono); color: var(--accent-strong); background: var(--accent-soft); border: 1px solid var(--accent-line); }
+.how-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+a.btn { text-decoration: none; }
+@media (max-width: 900px) { .how-steps { grid-template-columns: 1fr; gap: 10px; } }

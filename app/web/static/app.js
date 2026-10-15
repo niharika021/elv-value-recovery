@@ -448,6 +448,13 @@ async function loadAll() {
   }
 }
 
+// ---- how it works: the two guided starts ------------------------------------------------------
+$("how-start").addEventListener("click", () => openVehicle("V05"));
+$("how-ask").addEventListener("click", () => {
+  // the link switches to the Ask tab; the question goes once, not on every visit
+  setTimeout(() => ask("Why is the starter on V05 waiting for an engineer?"), 0);
+});
+
 // ---- tabs: one view at a time, driven by the URL hash so links and the back button work ----------
 const VIEWS = ["overview", "inbox", "rules", "ask"];
 
