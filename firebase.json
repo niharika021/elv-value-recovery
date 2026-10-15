@@ -1,0 +1,16 @@
+{
+  "hosting": {
+    "site": "coreyield",
+    "public": "app/web",
+    "ignore": ["**/*.py", "**/__pycache__/**", "**/.*"],
+    "rewrites": [
+      { "source": "/api/**", "run": { "serviceId": "coreyield", "region": "asia-south1" } },
+      { "source": "/health", "run": { "serviceId": "coreyield", "region": "asia-south1" } },
+      { "source": "/", "destination": "/static/index.html" }
+    ],
+    "headers": [
+      { "source": "/static/**", "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }] },
+      { "source": "/", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    ]
+  }
+}

@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 from app.elv_agent import tools
 from app.engines.audit import decision_outcomes, record_decision
 from app.engines.decisions import Decision, DecisionError
-from app.web.chat import ChatLimit, ChatTimeout, RateLimiter, Sessions, answer
+from app.web.chat import ChatLimit, ChatTimeout, ChatUpstream, RateLimiter, Sessions, answer
 
 STATIC = Path(__file__).resolve().parent / "static"
 
@@ -32,6 +32,7 @@ def _or_404(result: dict) -> dict:
     return result
 
 
+@app.get("/health")
 @app.get("/api/health")
 def health() -> dict:
     return {"ok": True}
@@ -137,6 +138,8 @@ async def chat(body: ChatIn, request: Request) -> dict:
         raise HTTPException(status_code=429, detail=str(e)) from e
     except ChatTimeout as e:
         raise HTTPException(status_code=504, detail=str(e)) from e
+    except ChatUpstream as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 

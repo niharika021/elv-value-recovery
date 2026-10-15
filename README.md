@@ -6,18 +6,20 @@ India's formal vehicle scrapping centres (RVSFs) lose end-of-life vehicles to in
 
 > **Design rule: agents read and explain; fixed engines own every number; an engineer approves every decision.**
 
+**Live demo: https://coreyield.web.app** (Firebase Hosting) · API on Cloud Run: https://coreyield-735286393981.asia-south1.run.app · synthetic demo data
+
 | On the demo month (12 synthetic vehicles) | |
 |---|---|
 | Gap to the informal offer closed | **35%** on average: ₹14,666 → ₹9,579 per vehicle, with the 2 red-compliance vehicles left untouched (39% if they were cleared) |
 | Gemini reading the part drawings | **20 / 20** limits and failure actions correct; fixed gates passed 19. A rule grades parts only after an engineer approves it |
 | Agents on the planted stories | **9 / 9**: right tool, key facts, every number traced to a tool result; refused "approve this part" |
-| Tests | **222**, all offline (no Gemini, no cloud) |
+| Tests | **226**, all offline (no Gemini, no cloud) |
 
 ---
 
 ## Contents
 
-[The problem](#the-problem) · [What it does](#what-it-does) · [Architecture](#architecture) · [Quickstart](#quickstart) · [Using the app](#using-the-app) · [Keeping the AI honest](#keeping-the-ai-honest) · [Engines](#engines) · [Demo data](#demo-data) · [Deploying](#deploying-to-cloud-run) · [Limitations](#limitations-and-open-questions) · [Build log](#build-log) · [Repository layout](#repository-layout)
+[The problem](#the-problem) · [What it does](#what-it-does) · [Architecture](#architecture) · [Google services](#google-services-used) · [Quickstart](#quickstart) · [Using the app](#using-the-app) · [Keeping the AI honest](#keeping-the-ai-honest) · [Engines](#engines) · [Demo data](#demo-data) · [Live demo and deployment](#live-demo-and-deployment) · [Limitations](#limitations-and-open-questions) · [Build log](#build-log) · [Repository layout](#repository-layout)
 
 ## The problem
 
@@ -44,7 +46,20 @@ For every vehicle that arrives:
 - **Blue: Gemini.** Gemini reads the drawings and powers the agents. It never sets a number: drawing limits must pass fixed gates and an engineer's sign-off, and the agents' tools are read-only.
 - **Amber: the engineer.** The approval inbox is the only way a person changes an outcome. Each decision is attributed, carries a reason, is appended to the log, and is then applied by the engines.
 
-**Stack:** Python 3.13 (tested) · pandas · OR-Tools CP-SAT · Gemini (`gemini-3.8-flash`) on Vertex AI · Google ADK · FastAPI + a no-build HTML/JS front end · Firestore and Cloud Run (prepared).
+**Stack:** Python 3.13 (tested) · pandas · OR-Tools CP-SAT · Gemini on Vertex AI (`gemini-3.5-flash` agents; drawings read with `gemini-3.8-flash`) · Google ADK · FastAPI + a no-build HTML/JS front end · Cloud Run · Firestore · Firebase Hosting.
+
+## Google services used
+
+| Service | How CoreYield uses it |
+|---|---|
+| **Gemini on Vertex AI** | Reads each part drawing's inspection limit with a verbatim quote (`gemini-3.8-flash`) ([`drawing_reader.py`](app/agents/drawing_reader.py), run as a batch step; results in `data/extracted/`), and answers every chat question at runtime through the agents (`gemini-3.5-flash`: steadier response times; same 9/9 evaluation). |
+| **Agent Development Kit (ADK)** | A coordinator plus inspection and compliance agents ([`agent.py`](app/elv_agent/agent.py)) with read-only tools over engine outputs; a grounding check traces every number in an answer. |
+| **Cloud Run** | Runs the FastAPI service (API, agents, engines) from one container, scaling to zero; service `coreyield` in asia-south1, as a dedicated service account allowed only Vertex AI and Firestore. |
+| **Firestore** | The engineer decision log: one append-only collection (`decisions`) holding part reviews, overrides, harvest instructions, sign-offs and drawing-rule approvals ([`FirestoreStore`](app/engines/decisions.py)); documents are created, never updated. |
+| **Firebase Hosting** | Serves the web app at coreyield.web.app and forwards `/api/**` and `/health` to Cloud Run through a rewrite, so the page and API share one origin (no CORS). |
+| **Cloud Build + Artifact Registry** | Build the container from the Dockerfile on every `gcloud run deploy --source` and store the image. |
+
+BigQuery and Cloud Storage are not used: the dataset is 12 CSV files and 20 PDFs that ship with the container.
 
 ## Quickstart
 
@@ -52,7 +67,7 @@ For every vehicle that arrives:
 python -m venv .venv
 source .venv/Scripts/activate     # Windows (Git Bash); macOS / Linux: source .venv/bin/activate
 pip install -r requirements.txt
-python -m pytest -q               # 222 tests, offline
+python -m pytest -q               # 226 tests, offline
 python -m uvicorn app.web.server:app --port 8080   # http://localhost:8080
 ```
 
@@ -162,28 +177,51 @@ All vehicles, parts, drawings, prices and evidence are **invented**. The two pub
 | `carbon_factors.csv` | 9 | kgCO₂e per kg of new part, and the share a reused part still carries |
 </details>
 
-## Deploying to Cloud Run
+## Live demo and deployment
 
-**Prepared, not yet deployed.** The `Dockerfile` builds one container (API, front end, agents), and `requirements.txt` resolves cleanly from scratch. The start command was run on an image-shaped copy configured only through environment variables. The image itself has not been built yet (Cloud Build builds it during deploy).
+| | URL |
+|---|---|
+| Web app (Firebase Hosting) | https://coreyield.web.app |
+| API (Cloud Run) | https://coreyield-735286393981.asia-south1.run.app · health: `/health` · API docs: `/api/docs` |
+
+Check both at any time (read-only; never records a decision):
+
+```bash
+python scripts/smoke_test.py --frontend https://coreyield.web.app --api https://coreyield-735286393981.asia-south1.run.app --chat
+```
 
 <details>
-<summary>Deployment commands</summary>
+<summary>Deploy from scratch</summary>
 
 ```bash
 P=elv-value-recovery-2026
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com firestore.googleapis.com --project $P
-gcloud firestore databases create --location=asia-south1 --project $P
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com firestore.googleapis.com aiplatform.googleapis.com --project $P
+gcloud firestore databases create --location=asia-south1 --type=firestore-native --project $P
 gcloud iam service-accounts create elv-app --project $P
 gcloud projects add-iam-policy-binding $P --member serviceAccount:elv-app@$P.iam.gserviceaccount.com --role roles/aiplatform.user
 gcloud projects add-iam-policy-binding $P --member serviceAccount:elv-app@$P.iam.gserviceaccount.com --role roles/datastore.user
+
+# 1. API on Cloud Run
 gcloud run deploy coreyield --source . --region asia-south1 --project $P \
-  --service-account elv-app@$P.iam.gserviceaccount.com --max-instances 2 --session-affinity \
-  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$P,GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=gemini-3.8-flash,ELV_STORE=firestore \
-  --no-allow-unauthenticated   # or --allow-unauthenticated for a public demo
+  --service-account elv-app@$P.iam.gserviceaccount.com --min-instances 0 --max-instances 1 --session-affinity --memory 1Gi --cpu 1 \
+  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$P,GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=gemini-3.5-flash,ELV_STORE=firestore,CHAT_TIMEOUT_S=55,GEMINI_TIMEOUT_MS=50000 \
+  --allow-unauthenticated
+
+# 2. Frontend on Firebase Hosting (firebase.json rewrites /api/** and /health to the service above)
+firebase projects:addfirebase $P
+firebase hosting:sites:create coreyield --project $P
+firebase deploy --only hosting --project $P
 ```
 
-Settings: `ELV_STORE=firestore` (decision log in Firestore; documents are created, never updated) · `CHAT_LIMIT_PER_HOUR` (default 30 per visitor) · `GEMINI_TIMEOUT_MS` (60000) · `CHAT_TIMEOUT_S` (120). `--session-affinity` keeps a visitor's chat on the instance that holds the conversation.
+Why these settings: Firebase Hosting ends a forwarded request after 60 s, so a chat question is capped at 55 s and a single Gemini call at 50 s, and the app answers with its own "please ask again" message first. Firebase strips Cloud Run's session-affinity cookie, so the service runs at most one instance: chat conversations live in that instance's memory.
 </details>
+
+**During judging only**, keep one instance warm so the first visitor does not wait for a cold start (it bills continuously while on):
+
+```bash
+gcloud run services update coreyield --region asia-south1 --project elv-value-recovery-2026 --min-instances 1   # on
+gcloud run services update coreyield --region asia-south1 --project elv-value-recovery-2026 --min-instances 0   # off afterwards
+```
 
 ## Limitations and open questions
 
@@ -194,7 +232,7 @@ Settings: `ELV_STORE=firestore` (decision log in Firestore; documents are create
 - **Photo gaps.** The data drops a few photos at random while the evidence file says "complete". The engine believes the photos, so five vehicles besides V11 show amber.
 - **Engineer identity is self-declared** in the demo. Google sign-in (IAP) on Cloud Run would verify it. C08 is judged on the decision log; because the log refuses a decision without an engineer and a reason, it passes by construction.
 - **Next actions are labels, not work orders.** "Replace with a new or Grade-A part" or "Released" is shown and audited; nothing is dispatched to another system.
-- **Not yet proven in production.** The Firestore store is tested only against a fake client, and the container image has not been built. Agent answers take about 20–35 s.
+- **Chat speed.** Agent answers take about 10–35 s; a question that needs longer than 55 s is stopped with a clear message (the Firebase Hosting limit is 60 s).
 
 ## Build log
 
@@ -211,6 +249,7 @@ Settings: `ELV_STORE=firestore` (decision log in Firestore; documents are create
 | 10 | Approval inbox and append-only decision log |
 | 11 | Chat in the app, request timeouts, Firestore store, Cloud Run container |
 | 12 | Hardening: engineer approval of Gemini's drawing rules, approval → next action, C08 from the decision log, demo-data notice, business KPIs, Cloud Run session affinity |
+| 13 | CoreYield name and the Mechnari-style tabbed interface; live on Firebase Hosting + Cloud Run with Firestore; `/health`, smoke test, clear errors when Gemini fails |
 
 ## Repository layout
 
@@ -221,9 +260,11 @@ app/engines/              grading, value, planner, rule_check, compliance, audit
 app/agents/               drawing_reader.py: Gemini reads the limits off each drawing
 app/elv_agent/            ADK agents, read-only tools, grounding check, live evaluation
 app/web/                  FastAPI server, chat, static front end (no build step)
-tests/                    222 offline tests
+tests/                    226 offline tests
 docs/                     architecture.svg (generated by scripts/make_architecture.py)
-Dockerfile                one container for Cloud Run
+Dockerfile                one container for Cloud Run (API, agents, engines)
+firebase.json, .firebaserc  Firebase Hosting: serves app/web, forwards /api/** and /health to Cloud Run
+scripts/smoke_test.py     read-only live check of the frontend and API
 ```
 
 ## Sources

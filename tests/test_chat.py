@@ -9,7 +9,7 @@ from app.elv_agent.ask import Turn
 from app.engines.audit import record_decision
 from app.engines.decisions import Decision, FirestoreStore
 from app.web import server
-from app.web.chat import ChatLimit, ChatTimeout, RateLimiter, Sessions, answer
+from app.web.chat import ChatLimit, ChatTimeout, ChatUpstream, RateLimiter, Sessions, answer
 
 
 class FakeSession:
@@ -154,3 +154,29 @@ def test_firestore_store_never_overwrites():
     store.append(d)
     with pytest.raises(RuntimeError):
         store.append(d)
+
+
+class FailingSession:
+    async def ask(self, q):
+        raise RuntimeError("499 CANCELLED: the operation was cancelled")    # as Gemini reported on Cloud Run
+
+
+def test_a_failed_agent_run_is_a_clear_error_and_a_fresh_conversation():
+    s = Sessions(factory=FailingSession)
+    sid, _ = s.get(None)
+    with pytest.raises(ChatUpstream, match="ask again"):
+        asyncio.run(answer(s, RateLimiter(10), "x", "q", sid))
+    assert s.get(sid)[0] != sid
+
+
+def test_a_failed_agent_run_is_a_502_not_a_500(monkeypatch):
+    monkeypatch.setattr(server, "SESSIONS", Sessions(factory=FailingSession))
+    monkeypatch.setattr(server, "LIMITER", RateLimiter(per_hour=5))
+    r = TestClient(server.app).post("/api/chat", json={"question": "Why is V05 flagged?"})
+    assert r.status_code == 502 and "ask again" in r.json()["detail"]
+
+
+def test_gemini_calls_retry_briefly_when_capacity_is_busy():
+    from app.elv_agent.agent import CONFIG
+    r = CONFIG.http_options.retry_options
+    assert set(r.http_status_codes) == {429, 503} and r.attempts == 4 and r.max_delay <= 8

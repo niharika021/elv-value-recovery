@@ -70,3 +70,19 @@ def test_a_refused_decision_is_a_400_with_the_reason():
     r = client.post("/api/decisions", json=dict(engineer="", kind="part_review", vehicle_id="V05",
                                                 action="accept", target="STR-03", reason="x"))
     assert r.status_code == 400
+
+
+def test_health_is_served_at_both_paths():
+    assert client.get("/health").json() == {"ok": True} and client.get("/api/health").json() == {"ok": True}
+
+
+def test_firebase_hosting_config_serves_the_page_and_forwards_the_api():
+    import json
+    from pathlib import Path
+    h = json.loads(Path("firebase.json").read_text())["hosting"]
+    assert h["public"] == "app/web" and "**/*.py" in h["ignore"]                     # no server code published
+    runs = {r["source"]: r["run"] for r in h["rewrites"] if "run" in r}
+    assert runs["/api/**"] == {"serviceId": "coreyield", "region": "asia-south1"} and "/health" in runs
+    assert {"source": "/", "destination": "/static/index.html"} in h["rewrites"]
+    assert Path("app/web/static/index.html").exists()
+    assert json.loads(Path(".firebaserc").read_text())["projects"]["default"] == "elv-value-recovery-2026"

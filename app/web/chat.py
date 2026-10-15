@@ -9,6 +9,7 @@ decision log is unaffected).
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import time
 import uuid
@@ -20,8 +21,15 @@ LIMIT_PER_HOUR = int(os.environ.get("CHAT_LIMIT_PER_HOUR", "30"))   # per visito
 CHAT_TIMEOUT_S = float(os.environ.get("CHAT_TIMEOUT_S", "120"))       # whole question, all agents
 
 
+log = logging.getLogger("coreyield.chat")
+
+
 class ChatTimeout(Exception):
     pass
+
+
+class ChatUpstream(Exception):
+    """The agent run failed (for example Gemini returned an error); the visitor should ask again."""
 
 
 class ChatLimit(Exception):
@@ -83,5 +91,10 @@ async def answer(sessions: Sessions, limiter: RateLimiter, client: str, question
         sessions.drop(sid)   # a half-finished turn would confuse the next question
         raise ChatTimeout(f"The agents took longer than {timeout_s:g} s. Please ask again; "
                           "a new conversation has been started.") from e
+    except Exception as e:  # noqa: BLE001 - any failed agent run must reach the visitor as a clear message
+        sessions.drop(sid)
+        log.exception("agent run failed")
+        raise ChatUpstream("The agents could not finish this answer (the AI service returned an error). "
+                           "Please ask again; a new conversation has been started.") from e
     return dict(session_id=sid, question=q, answer=turn.answer or "(no answer)", agents=turn.agents,
                 tools=turn.tools, ungrounded=turn.ungrounded, seconds=round(time.monotonic() - t0, 1))

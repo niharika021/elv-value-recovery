@@ -16,10 +16,17 @@ from google.genai import types
 from app.elv_agent import tools
 
 load_dotenv()
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+# gemini-3.5-flash: on 2026-10-15 gemini-3.8-flash answered in 7-74 s and sometimes hit its deadline;
+# 3.5-flash answered steadily and passed the same 9/9 agent evaluation (eval_demo.py).
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
 # A Gemini request occasionally never returns; without a timeout the whole chat hangs for good.
 REQUEST_TIMEOUT_MS = int(os.environ.get("GEMINI_TIMEOUT_MS", "60000"))
-CONFIG = types.GenerateContentConfig(temperature=0, http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS))
+# Vertex AI answers 429 RESOURCE_EXHAUSTED (or 503) when shared capacity is briefly busy; retry a
+# few times with backoff (about 1, 2, 4 s plus jitter), well inside the chat's time budget.
+RETRY = types.HttpRetryOptions(attempts=4, initial_delay=1.0, max_delay=8.0, exp_base=2.0, jitter=1.0,
+                               http_status_codes=[429, 503])
+CONFIG = types.GenerateContentConfig(temperature=0, http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS,
+                                                                                   retry_options=RETRY))
 
 GROUND_RULES = """
 Ground rules, always:
